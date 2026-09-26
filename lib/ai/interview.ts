@@ -16,6 +16,17 @@ const MEDIATE_STORY_OPTIONS = ["It's been building a while", "One thing set it o
 
 const HISTORY = 16;
 
+const CONFIRM_STEP = {
+  lead: "Here's what I'll plan around:",
+  question: "Did I get that right?",
+  options: ["That's right", "Change something"],
+};
+const CONSENT_STEP = {
+  lead: "Here's the gist I'd bring to the group, without your name:",
+  question: "Is it OK to use this?",
+  options: ["Yes, use this", "Change it", "Keep all of this private"],
+};
+
 type NewMsg = {
   role: "HUSH" | "MEMBER";
   kind?: MsgKind;
@@ -285,14 +296,15 @@ function turnMessages(turn: {
 }): NewMsg[] {
   const out: NewMsg[] = [];
   const chips = turn.topic === "confirm" || turn.topic === "consent" ? turn.confirmChips : undefined;
-  if (turn.ack && !chips?.length) out.push({ role: "HUSH", content: turn.ack, topic: `${turn.topic}-ack` });
-  out.push({
-    role: "HUSH",
-    content: chips?.length && turn.ack ? `${turn.ack}\n${turn.question}` : turn.question,
-    options: turn.options.slice(0, 5),
-    chips,
-    topic: turn.topic,
-  });
+  if (chips?.length) {
+    // Fixed wording and options so the deterministic confirm/consent handlers always match.
+    const fixed = turn.topic === "confirm" ? CONFIRM_STEP : CONSENT_STEP;
+    const lead = (turn.ack ?? "").replace(/\s*\n+\s*/g, " ").trim() || fixed.lead;
+    out.push({ role: "HUSH", content: `${lead}\n${fixed.question}`, options: fixed.options, chips, topic: turn.topic });
+    return out;
+  }
+  if (turn.ack) out.push({ role: "HUSH", content: turn.ack, topic: `${turn.topic}-ack` });
+  out.push({ role: "HUSH", content: turn.question, options: turn.options.slice(0, 5), topic: turn.topic });
   return out;
 }
 
