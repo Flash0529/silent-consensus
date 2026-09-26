@@ -591,3 +591,110 @@ next, react, react-dom, typescript, tailwindcss (v3.4, `tailwind.config.ts` per 
 5. Verify venue attributes (section 8).
 
 **No blocking questions.** Reply **"go"** to start M0. Tell me before then if you want a different repo name or the original milestone order (voice as M3).
+
+---
+
+## 14. Mediation mode (added Sat 3:45 PM)
+
+**Same core idea, second use:** Hush hears each person's side privately, then proposes a way forward that everyone can accept, without quoting anyone or revealing what they kept private.
+
+### Flow
+1. **Start.** `/new` asks first: **A** "Plan a hangout" or **B** "Work through a disagreement". Mediation asks for a neutral topic name ("The apartment", "Trip money") and a check-in date. Then it shows the same link and QR invite.
+2. **Private interview (mediation topics):** what happened from your side → how it affected you → what matters most to you (needs, not positions) → what you'd like to happen → what you could offer → anything off-limits → **consent**. At consent, Hush shows the *gist it will bring to the group, without your name*. The person picks **A** "Yes, use this", **B** "Change it", or **C** "Keep all of this private".
+3. **Safety screen** runs on every turn (rules + the model's `safety` field):
+   - It looks for threats, violence, abuse or coercion, and self-harm.
+   - On `stop`, Hush replies privately with resources: 988 (call or text), and the National Domestic Violence Hotline (1-800-799-7233, or text START to 88788).
+   - That person's content never enters the joint pipeline.
+   - The circle pauses, and the group sees only a neutral line: "Hush paused this one. Some things are better worked through with a person."
+4. **Mediator pipeline** (`lib/ai/mediator.ts`), with real stepper stages. The group stepper shows:
+
+   | Stage | Stepper row |
+   |---|---|
+   | READING | Heard N sides privately |
+   | MAPPING | Found common ground |
+   | DRAFTING | Drafted a way forward |
+   | CHECKING | Checking nothing private shows |
+
+   What happens at each step:
+   1. **Map interests (LLM):** the input is only the *consented gists* plus needs, hopes, offers, and off-limits items. They are labelled P1..Pn in shuffled order with no names. The output is shared needs, tensions, and possible trades.
+   2. **Draft (LLM):**
+      - title
+      - `commonGround` (≤4)
+      - `whatMatters` (≤5 needs, unattributed)
+      - `proposal`: 3–5 concrete agreement items `{step, detail}`
+      - `conversationGuide`: `{groundRules[], openers[]}`
+      - `checkIn` date line
+   3. **Private briefs (LLM, one call per person, using only that person's vault):** which of your needs are reflected, a suggested opener in your voice, and one thing you could offer.
+   4. **Leak and attribution guard** (see below).
+   5. **Persist** a Plan with `kind: MEDIATE`, and set status to PROPOSED.
+5. **Mediation card (group):**
+   - "What you all share"
+   - "What matters to this group"
+   - "A way forward" (numbered)
+   - "How to talk about it"
+   - the check line
+6. **Vote:**
+   - **A** "I can agree to this"
+   - **B** "I'd change one thing": a private follow-up, then one redraft
+   - **C** "I'm not ready yet": a private follow-up; Hush suggests a 1:1 or a break, and nothing is shown to the group except "Not everyone's ready yet"
+7. **Your brief** (`/c/[slug]/share` in mediation mode) replaces "Your share". There is no chip-in in mediation.
+
+### Privacy rules specific to mediation
+- **Honest anonymity promise.** In a 2-person conflict, the other person knows the other side exists. So Hush promises **"no quotes, and nothing you keep private"**, not "no one can tell". The first message says exactly this.
+- **What goes into synthesis:** only consented gists plus needs, hopes, and offers. Stories, feelings in detail, and anything marked private stay in the vault and never enter the synthesis prompt.
+- **Guard additions:**
+  - The rule layer rejects any 5+ word n-gram from a member's messages or private story.
+  - It rejects names next to feelings or needs, and it rejects "one of you / someone feels…" phrasing tied to a specific detail.
+  - The judge is asked: "Could anyone learn a detail that a person kept private, or tell who said what beyond what is unavoidable?"
+- The safety `stop` path is tested so that flagged content never reaches the synthesis input.
+
+### Schema deltas
+- `Circle.kind` is `PLAN | MEDIATE` (default PLAN), plus `Circle.topic String?`.
+- `PlanningStage` gains `MAPPING` and `DRAFTING`. `CircleStatus` gains `PAUSED`.
+- New model `Perspective` (private, 1:1 with Member):
+
+  ```
+  gist String?, gistConsent (PENDING|SHARE|PRIVATE), story String?, feelings[], needs[], hopes[], offers[], offLimits[], safety (NONE|CONCERN|STOP)
+  ```
+- `Plan` gains `kind` and `content Json?` (the mediation card). `stops` defaults to `[]` and `perPersonCents` to 0.
+- `MemberShare` gains `brief Json?`, and the money fields default to 0.
+- `VoteChoice` gains `NOT_READY`.
+
+### Mediation demo seed: "The apartment"
+Omar, Maya, Priya, and Jordan are roommates.
+
+| Roommate | Private context |
+|---|---|
+| Omar | feels he does most of the dishes and is starting to resent it |
+| Maya | works late shifts at a second job, so she's up and cooking at midnight, and is embarrassed about money |
+| Priya | gets anxious when guests show up unannounced |
+| Jordan | wants a system and hates conflict |
+
+Target proposal:
+1. a rotating chore chart
+2. kitchen quiet after 11:30 PM on weeknights, with a "late cook" routine
+3. a heads-up in the group chat for guests by 6 PM
+4. a 15-minute check-in in two weeks
+
+No reasons are shown.
+
+### Re-timed milestones (now 3:45 PM Sat)
+
+| By | Milestone |
+|---|---|
+| 6:30 PM | **M2** interview engine for both modes, safety screen, consent step, chat UI |
+| 9:00 PM | **M3** hangout planner + guard + plan card + vote |
+| 11:00 PM | **M3b** mediator pipeline, mediation card, briefs, vote |
+| 12:15 AM | **M4** chip-in money + share screen |
+| 1:30 AM | **M5** voice (Meta ASR → Grok STT → Jev audio input → Web Speech) |
+| 3:00 AM | **M6** demo mode for both seeds, presenter view, trace |
+| 4:00 AM | **M7** polish + README / WRITEUP / DEMO_SCRIPT / DEVPOST |
+| 5:30 AM | **Video** |
+| 6:00 AM | **Submit** |
+
+**Cuts** (made now to fit this in):
+- vote replanning becomes **redraft only in mediation, none in hangout**
+- the voice fallback chain drops to whatever provider works
+- simulate is kept only for the hangout demo
+
+**Demo video:** it keeps the Maya hangout story as the spine (2:00) and adds a 30-second "and it works for harder conversations too" mediation beat.

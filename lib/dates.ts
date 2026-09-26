@@ -7,7 +7,7 @@ export function dateLabel(start: Date, area: string) {
     month: "short",
     day: "numeric",
   }).format(start);
-  return `${d} · ${area}`;
+  return area ? `${d} · ${area}` : d;
 }
 
 export function timeLabel(date: Date) {

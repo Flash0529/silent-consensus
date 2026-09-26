@@ -8,9 +8,11 @@ import { avatarFor } from "@/lib/avatars";
 
 const Body = z.object({
   organizerName: z.string().trim().min(1).max(30),
+  kind: z.enum(["PLAN", "MEDIATE"]).default("PLAN"),
+  topic: z.string().trim().max(60).optional(),
   title: z.string().trim().min(1).max(60),
   activity: z.string().trim().min(1).max(40),
-  area: z.string().trim().min(1).max(60),
+  area: z.string().trim().max(60).default(""),
   windowStart: z.coerce.date(),
   windowEnd: z.coerce.date(),
 });

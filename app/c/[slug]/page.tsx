@@ -26,7 +26,17 @@ export default function GroupPage({ params }: { params: Promise<{ slug: string }
   const allDone = total > 0 && done === total;
   const waiting = total - done;
   const planning = circle.status === "PLANNING" || circle.planningStage !== "NONE";
-  const heading = allDone ? "Everyone's in" : waiting === 1 ? "Waiting on 1 friend" : `Waiting on ${waiting} friends`;
+  const mediate = circle.kind === "MEDIATE";
+  const heading =
+    circle.status === "PAUSED"
+      ? "Paused for now"
+      : allDone
+        ? mediate
+          ? "Every side is heard"
+          : "Everyone's in"
+        : waiting === 1
+          ? `Waiting on 1 ${mediate ? "person" : "friend"}`
+          : `Waiting on ${waiting} ${mediate ? "people" : "friends"}`;
 
   return (
     <main className="relative min-h-dvh pb-40">
@@ -51,8 +61,11 @@ export default function GroupPage({ params }: { params: Promise<{ slug: string }
           <PlanningStepper stage={circle.planningStage} memberCount={total} />
         ) : (
           <p className="text-secondary text-ink-2">
-            {done} of {total} finished chatting with Hush.{" "}
-            {allDone ? "Hush will plan in a moment." : "Hush plans as soon as everyone's done."}
+            {circle.status === "PAUSED"
+              ? "Hush paused this one. Some things are better worked through with a person."
+              : `${done} of ${total} finished chatting with Hush. ${
+                  allDone ? "Hush is starting now." : mediate ? "Hush suggests a way forward once every side is heard." : "Hush plans as soon as everyone's done."
+                }`}
           </p>
         )}
         <p className="flex items-center gap-2 text-secondary text-muted">

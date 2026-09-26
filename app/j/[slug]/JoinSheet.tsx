@@ -26,6 +26,7 @@ export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const organizer = circle.members.find((m) => m.isOrganizer)?.name ?? "A friend";
   const closed = circle.status !== "COLLECTING";
+  const mediate = circle.kind === "MEDIATE";
   const nextColor = avatarStyle(avatarFor(circle.members.length));
 
   const join = async (e: React.FormEvent) => {
@@ -60,10 +61,13 @@ export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
 
         <div className="mt-11 flex flex-col items-start gap-[14px]">
           <HushMascot size={60} />
-          <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.01em]">Join {organizer}'s plan</h1>
+          <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.01em]">
+            {mediate ? `Talk it through: ${circle.title}` : `Join ${organizer}'s plan`}
+          </h1>
           <p className="text-body text-muted">
-            {organizer} invited you to {circle.title}. Hush will ask you a few quick questions, just between the two of
-            you.
+            {mediate
+              ? `${organizer} asked Hush to help everyone find a way forward. Hush will hear your side privately and never quote you.`
+              : `${organizer} invited you to ${circle.title}. Hush will ask you a few quick questions, just between the two of you.`}
           </p>
           {circle.members.length > 0 && (
             <div className="flex items-center gap-[10px]">
@@ -118,8 +122,9 @@ export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
           </>
         )}
         <p className="mt-[22px] text-secondary text-muted">
-          Only continue if a friend sent you this link. Your answers go to Hush only. Friends see the plan, never your
-          reasons.
+          {mediate
+            ? "Only continue if someone involved sent you this link. Your answers go to Hush only. The group sees a way forward, never your words."
+            : "Only continue if a friend sent you this link. Your answers go to Hush only. Friends see the plan, never your reasons."}
         </p>
       </form>
 

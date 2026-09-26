@@ -7,11 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CircleKind {
+  PLAN
+  MEDIATE
+}
+
 enum CircleStatus {
   COLLECTING
   PLANNING
   PROPOSED
   CONFIRMED
+  PAUSED
 }
 
 enum PlanningStage {
@@ -19,6 +25,8 @@ enum PlanningStage {
   READING
   FILTERING
   COMPOSING
+  MAPPING
+  DRAFTING
   BALANCING
   CHECKING
   DONE
@@ -54,12 +62,27 @@ enum VoteChoice {
   IN
   DIFFERENT_TIME
   TWEAK
+  NOT_READY
+}
+
+enum GistConsent {
+  PENDING
+  SHARE
+  PRIVATE
+}
+
+enum Safety {
+  NONE
+  CONCERN
+  STOP
 }
 
 model Circle {
   id            String        @id @default(cuid())
   slug          String        @unique
+  kind          CircleKind    @default(PLAN)
   title         String
+  topic         String?
   activity      String
   area          String
   windowStart   DateTime
@@ -89,6 +112,7 @@ model Member {
   createdAt       DateTime        @default(now())
   messages        Message[]
   vault           Vault?
+  perspective     Perspective?
   shares          MemberShare[]
   votes           Vote[]
 
@@ -104,6 +128,7 @@ model Message {
   content    String
   options    Json?
   chips      Json?
+  topic      String?
   transcript String?
   createdAt  DateTime @default(now())
 
@@ -125,15 +150,34 @@ model Vault {
   updatedAt        DateTime @updatedAt
 }
 
+// Private to one member (mediation mode). Only the consented gist, needs, hopes,
+// offers and offLimits may enter the mediator; story and feelings never do.
+model Perspective {
+  memberId    String      @id
+  member      Member      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  gist        String?
+  gistConsent GistConsent @default(PENDING)
+  story       String?
+  feelings    String[]
+  needs       String[]
+  hopes       String[]
+  offers      String[]
+  offLimits   String[]
+  safety      Safety      @default(NONE)
+  updatedAt   DateTime    @updatedAt
+}
+
 model Plan {
   id              String        @id @default(cuid())
   circleId        String
   circle          Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  kind            CircleKind    @default(PLAN)
   version         Int
   title           String
   dateLabel       String
-  stops           Json
-  perPersonCents  Int
+  stops           Json          @default("[]")
+  content         Json?
+  perPersonCents  Int           @default(0)
   whyItWorks      String[]
   leakCheckPassed Boolean
   status          String        @default("PROPOSED")
@@ -151,15 +195,16 @@ model MemberShare {
   plan           Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
   memberId       String
   member         Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  baseCents      Int
+  baseCents      Int    @default(0)
   capCents       Int?
   shortfallCents Int    @default(0)
   headroomCents  Int?
   coveredCents   Int    @default(0)
   chipInCents    Int    @default(0)
   refundCents    Int    @default(0)
-  finalCents     Int
-  privateNote    String
+  finalCents     Int    @default(0)
+  privateNote    String @default("")
+  brief          Json?
 
   @@unique([planId, memberId])
 }

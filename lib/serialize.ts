@@ -5,6 +5,7 @@ import { dateLabel } from "@/lib/dates";
 
 type CircleIn = {
   slug: string;
+  kind?: string;
   title: string;
   activity: string;
   area: string;
@@ -65,6 +66,7 @@ export function toGroupSafe(circle: CircleIn) {
 
   return {
     slug: circle.slug,
+    kind: (circle.kind ?? "PLAN") as "PLAN" | "MEDIATE",
     title: circle.title,
     activity: circle.activity,
     area: circle.area,
