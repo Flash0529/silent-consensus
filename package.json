@@ -11,7 +11,8 @@
     "test": "vitest run",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:live": "vitest run --config vitest.live.config.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
