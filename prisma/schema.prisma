@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CircleStatus {
+  COLLECTING
+  PLANNING
+  PROPOSED
+  CONFIRMED
+}
+
+enum PlanningStage {
+  NONE
+  READING
+  FILTERING
+  COMPOSING
+  BALANCING
+  CHECKING
+  DONE
+  FAILED
+}
+
+enum Role {
+  ORGANIZER
+  MEMBER
+}
+
+enum InterviewStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+}
+
+enum MsgRole {
+  HUSH
+  MEMBER
+}
+
+enum MsgKind {
+  TEXT
+  OPTIONS
+  VOICE
+  CONFIRM
+  CHIPIN
+  FOLLOWUP
+}
+
+enum VoteChoice {
+  IN
+  DIFFERENT_TIME
+  TWEAK
+}
+
+model Circle {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  title         String
+  activity      String
+  area          String
+  windowStart   DateTime
+  windowEnd     DateTime
+  status        CircleStatus  @default(COLLECTING)
+  planningStage PlanningStage @default(NONE)
+  replanCount   Int           @default(0)
+  organizerId   String?       @unique
+  isDemo        Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  members       Member[]
+  plans         Plan[]
+  traces        AiTrace[]
+}
+
+model Member {
+  id              String          @id @default(cuid())
+  circleId        String
+  circle          Circle          @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  name            String
+  avatarColor     String
+  tokenHash       String          @unique
+  role            Role            @default(MEMBER)
+  interviewStatus InterviewStatus @default(NOT_STARTED)
+  persona         String?
+  paidAt          DateTime?
+  createdAt       DateTime        @default(now())
+  messages        Message[]
+  vault           Vault?
+  shares          MemberShare[]
+  votes           Vote[]
+
+  @@index([circleId])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  memberId   String
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  role       MsgRole
+  kind       MsgKind  @default(TEXT)
+  content    String
+  options    Json?
+  chips      Json?
+  transcript String?
+  createdAt  DateTime @default(now())
+
+  @@index([memberId, createdAt])
+}
+
+model Vault {
+  memberId         String   @id
+  member           Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  budgetCapCents   Int?
+  dietary          String[]
+  alcohol          String?
+  stepFreeRequired Boolean?
+  availableWindows Json?
+  noise            String?
+  vibe             String[]
+  maxTravelMinutes Int?
+  privateNote      String?
+  updatedAt        DateTime @updatedAt
+}
+
+model Plan {
+  id              String        @id @default(cuid())
+  circleId        String
+  circle          Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  version         Int
+  title           String
+  dateLabel       String
+  stops           Json
+  perPersonCents  Int
+  whyItWorks      String[]
+  leakCheckPassed Boolean
+  status          String        @default("PROPOSED")
+  createdAt       DateTime      @default(now())
+  shares          MemberShare[]
+  chipIns         ChipIn[]
+  votes           Vote[]
+
+  @@unique([circleId, version])
+}
+
+model MemberShare {
+  id             String @id @default(cuid())
+  planId         String
+  plan           Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  baseCents      Int
+  capCents       Int?
+  shortfallCents Int    @default(0)
+  headroomCents  Int?
+  coveredCents   Int    @default(0)
+  chipInCents    Int    @default(0)
+  refundCents    Int    @default(0)
+  finalCents     Int
+  privateNote    String
+
+  @@unique([planId, memberId])
+}
+
+model ChipIn {
+  id           String   @id @default(cuid())
+  planId       String
+  plan         Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  fromMemberId String
+  amountCents  Int
+  createdAt    DateTime @default(now())
+
+  @@unique([planId, fromMemberId])
+}
+
+model Vote {
+  id       String     @id @default(cuid())
+  planId   String
+  plan     Plan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  memberId String
+  member   Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  choice   VoteChoice
+
+  @@unique([planId, memberId])
+}
+
+model AiTrace {
+  id        String   @id @default(cuid())
+  circleId  String?
+  circle    Circle?  @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  task      String
+  provider  String
+  ms        Int
+  ok        Boolean
+  label     String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([circleId, createdAt])
+}
