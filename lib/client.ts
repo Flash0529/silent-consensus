@@ -27,5 +27,4 @@ export async function api<T = unknown>(url: string, init: RequestInit = {}): Pro
 
 export const fetcher = <T,>(url: string) => api<T>(url);
 
-export const money = (cents: number) =>
-  cents % 100 === 0 ? `$${cents / 100}` : `$${(cents / 100).toFixed(2)}`;
+export { money } from "@/lib/format";

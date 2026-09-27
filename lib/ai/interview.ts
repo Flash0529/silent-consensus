@@ -156,7 +156,12 @@ function historyFor(msgs: Message[]) {
 
 async function markDone(member: MemberWithCircle) {
   await db.member.update({ where: { id: member.id }, data: { interviewStatus: "DONE" } });
-  await onMemberDone(member.circleId);
+  try {
+    await onMemberDone(member.circleId);
+  } catch (e) {
+    // The member's chat must never fail because planning couldn't start; the organizer can retry.
+    console.error("could not start planning", e);
+  }
 }
 
 async function safetyStop(member: MemberWithCircle) {
@@ -228,6 +233,57 @@ export async function handleTurn(
       return { messages: created };
     }
 
+    // Replies after a "Different time" / "Tweak" / "Not ready" vote: note privately, no model call.
+    if (lastTopic === "followup" || lastTopic === "followup-more") {
+      const typeIt = /^i'?ll type it$/i.test(text);
+      if (typeIt) {
+        created.push(...(await save(member.id, [{ role: "HUSH", content: "Go ahead, I'm listening.", topic: "followup-more" }])));
+        return { messages: created };
+      }
+      if (c.kind === "PLAN") {
+        const v = await loadVault(member.id);
+        const fast = fastPlanUpdates(text, "timing", weekdayName(c.windowStart));
+        await writeVault(member.id, { ...v, ...fast, privateNote: [v.privateNote, `After the first plan: ${text}`].filter(Boolean).join(" ").slice(0, 400) });
+      } else {
+        const p = await loadPerspective(member.id);
+        await writePerspective(member.id, { hopes: [...p.hopes, text.slice(0, 100)] });
+      }
+      created.push(
+        ...(await save(member.id, [
+          {
+            role: "HUSH",
+            content:
+              c.kind === "PLAN"
+                ? "Got it. I've noted that privately. If the group replans, I'll build it in without saying where it came from."
+                : "Thank you. I've noted that privately. If there's a second draft, I'll shape it around this without saying where it came from.",
+            topic: "followup-done",
+          },
+        ])),
+      );
+      return { messages: created };
+    }
+
+    // Finished interviews don't reopen: answer kindly without a model call.
+    if (member.interviewStatus === "DONE") {
+      created.push(
+        ...(await save(member.id, [
+          {
+            role: "HUSH",
+            content:
+              c.status === "COLLECTING" || c.status === "PLANNING"
+                ? "Thanks, I've noted that. I have what I need, and I'll let you know when it's ready."
+                : "Thanks, I've noted that privately.",
+            topic: "after-done",
+          },
+        ])),
+      );
+      if (c.kind === "PLAN") {
+        const v = await loadVault(member.id);
+        await writeVault(member.id, { ...v, privateNote: [v.privateNote, text].filter(Boolean).join(" ").slice(0, 400) });
+      }
+      return { messages: created };
+    }
+
     if (c.kind === "PLAN") {
       const fast = fastPlanUpdates(text, lastTopic, weekdayName(c.windowStart));
       if (Object.keys(fast).length) await writeVault(member.id, { ...(await loadVault(member.id)), ...fast });
@@ -258,9 +314,13 @@ export async function handleTurn(
         messages: [{ role: "system", content: mediationInterviewPrompt({ ...ctx, known: persp }) }, ...historyFor(history)],
       });
       if (stricter(screenText(text), turn.safety) === "stop") return { messages: [...created, ...(await safetyStop(member))] };
-      await writePerspective(member.id, mergePerspective(persp, turn.updates));
+      const merged = mergePerspective(persp, turn.updates);
+      if (turn.topic === "consent" && !merged.gist) merged.gist = gistFromParts(merged);
+      await writePerspective(member.id, merged);
       if (turn.safety === "concern") await writePerspective(member.id, { safety: "CONCERN" });
-      created.push(...(await save(member.id, turnMessages(turn))));
+      // What the person approves must be exactly what gets shared: chips come from the stored gist.
+      const chips = turn.topic === "consent" ? splitGist(merged.gist ?? "") : undefined;
+      created.push(...(await save(member.id, turnMessages(turn, chips))));
       if (turn.done && turn.topic === "done") await markDone(member);
     } else {
       const vault = await loadVault(member.id);
@@ -275,8 +335,10 @@ export async function handleTurn(
       });
       if (stricter(screenText(text), turn.safety) === "stop") return { messages: [...created, ...(await safetyStop(member))] };
       const fast = text ? fastPlanUpdates(text, lastTopic, weekdayName(c.windowStart)) : {};
-      await writeVault(member.id, { ...mergeVault(vault, turn.constraintUpdates), ...fast });
-      created.push(...(await save(member.id, turnMessages(turn))));
+      const merged = { ...mergeVault(vault, turn.constraintUpdates), ...fast };
+      await writeVault(member.id, merged);
+      const chips = turn.topic === "confirm" && !turn.confirmChips?.length ? chipsFromVault(merged) : undefined;
+      created.push(...(await save(member.id, turnMessages(turn, chips))));
       if (turn.done && turn.topic === "done") await markDone(member);
     }
     return { messages: created };
@@ -287,15 +349,52 @@ export async function handleTurn(
   }
 }
 
-function turnMessages(turn: {
-  ack?: string;
-  question: string;
-  options: string[];
-  topic: string;
-  confirmChips?: string[];
-}): NewMsg[] {
+function splitGist(gist: string) {
+  return gist
+    .split(/(?<=[.!?])\s+/)
+    .map((x) => x.trim().replace(/[.]$/, ""))
+    .filter(Boolean)
+    .slice(0, 4);
+}
+
+function gistFromParts(p: PerspectiveShape) {
+  const parts = [
+    p.needs.length ? `Needs ${p.needs.slice(0, 2).join(" and ")}.` : "",
+    p.hopes.length ? `Hopes for ${p.hopes[0]}.` : "",
+    p.offers.length ? `Would ${p.offers.slice(0, 2).join(" and ")}.` : "",
+  ].filter(Boolean);
+  return parts.join(" ") || "Wants things to feel fair and calm.";
+}
+
+function chipsFromVault(v: VaultShape) {
+  const chips: string[] = [];
+  if (v.budgetCapCents !== null) chips.push(`Up to $${Math.round(v.budgetCapCents / 100)}`);
+  for (const d of v.dietary) chips.push(d.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
+  if (v.alcohol === "none") chips.push("No alcohol");
+  else if (v.alcohol === "prefer_none") chips.push("Not a bar night");
+  if (v.stepFreeRequired) chips.push("Step-free places only");
+  const w = Array.isArray(v.availableWindows) ? (v.availableWindows as { start?: string }[])[0] : undefined;
+  if (w?.start && w.start !== "00:00") {
+    const h = Number(w.start.slice(0, 2));
+    chips.push(`Free after ${((h + 11) % 12) + 1}${w.start.slice(3) === "00" ? "" : ":" + w.start.slice(3)} ${h >= 12 ? "PM" : "AM"}`);
+  }
+  if (v.noise === "quiet") chips.push("Somewhere quiet");
+  return chips.length ? chips.slice(0, 5) : ["No special needs"];
+}
+
+function turnMessages(
+  turn: {
+    ack?: string;
+    question: string;
+    options: string[];
+    topic: string;
+    confirmChips?: string[];
+  },
+  overrideChips?: string[],
+): NewMsg[] {
   const out: NewMsg[] = [];
-  const chips = turn.topic === "confirm" || turn.topic === "consent" ? turn.confirmChips : undefined;
+  const chips =
+    turn.topic === "confirm" || turn.topic === "consent" ? (overrideChips?.length ? overrideChips : turn.confirmChips) : undefined;
   if (chips?.length) {
     // Fixed wording and options so the deterministic confirm/consent handlers always match.
     const fixed = turn.topic === "confirm" ? CONFIRM_STEP : CONSENT_STEP;

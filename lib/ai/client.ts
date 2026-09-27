@@ -128,10 +128,28 @@ function isFormatRejection(e: unknown) {
   return status === 400 && (msg.includes("response_format") || msg.includes("json_schema") || msg.includes("schema"));
 }
 
+const schemaCache = new WeakMap<z.ZodType, string>();
+function schemaText(schema: z.ZodType) {
+  let t = schemaCache.get(schema);
+  if (!t) {
+    t = JSON.stringify(z.toJSONSchema(schema, { target: "draft-7", io: "input" }));
+    schemaCache.set(schema, t);
+  }
+  return t;
+}
+
 async function complete(p: Provider, args: CallArgs<z.ZodType>, messages: Msg[]) {
+  // Some routed models ignore response_format, so the schema also goes in the prompt.
+  const withSchema: Msg[] = [
+    ...messages,
+    {
+      role: "system",
+      content: `Respond with ONE JSON object that matches this JSON Schema exactly. Include every required key, use arrays where arrays are expected, no extra text:\n${schemaText(args.schema)}`,
+    },
+  ];
   const body: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
     model: p.model,
-    messages,
+    messages: withSchema,
     response_format: responseFormat(p, args.task, args.schema),
     temperature: args.temperature ?? 0.5,
     max_tokens: args.maxTokens ?? 1200,
@@ -139,6 +157,11 @@ async function complete(p: Provider, args: CallArgs<z.ZodType>, messages: Msg[])
   if (p.supportsReasoningEffort && args.reasoningEffort)
     (body as unknown as Record<string, unknown>).reasoning_effort = args.reasoningEffort;
   const res = await p.client.chat.completions.create(body, { timeout: TIMEOUT_MS });
+  if (!res?.choices?.length) {
+    // OpenRouter can answer 200 with an error body (upstream overload). Treat it as transient.
+    const upstream = (res as unknown as { error?: { message?: string; code?: number } })?.error;
+    throw Object.assign(new Error(`Upstream error: ${upstream?.message ?? "no choices"}`), { status: upstream?.code ?? 502 });
+  }
   return { text: res.choices[0]?.message?.content ?? "", routedModel: res.model };
 }
 
@@ -178,7 +201,9 @@ export async function callLLM<S extends z.ZodType>(args: CallArgs<S>): Promise<C
 
   for (const p of chain) {
     let messages = args.messages;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    let repaired = false;
+    let transientRetries = 0;
+    for (let attempt = 0; attempt < 4; attempt++) {
       const t0 = Date.now();
       try {
         let out;
@@ -200,7 +225,17 @@ export async function callLLM<S extends z.ZodType>(args: CallArgs<S>): Promise<C
           });
           return { data: parsed.data, provider: p.id, providerLabel: p.label, model: out.routedModel ?? p.model, ms };
         }
-        attempts.push(`${p.id}: invalid output`);
+        if (repaired) {
+          attempts.push(`${p.id}: invalid output after repair`);
+          break;
+        }
+        repaired = true;
+        attempts.push(
+          `${p.id}: invalid output ${parsed.error.issues
+            .slice(0, 3)
+            .map((i) => `${i.path.join(".")}: ${i.message}`)
+            .join("; ")} | ${out.text.slice(0, 160)}`,
+        );
         // Repair retry on the same provider, then give up on it.
         messages = [
           ...args.messages,
@@ -215,8 +250,15 @@ export async function callLLM<S extends z.ZodType>(args: CallArgs<S>): Promise<C
         ];
       } catch (e) {
         const status = (e as { status?: number })?.status;
-        attempts.push(`${p.id}: ${status ?? (e as Error)?.name ?? "error"}`);
-        break; // any provider error (timeout, 429, 5xx, 4xx): go straight to the next provider
+        const err = e as Error & { status?: number };
+        attempts.push(`${p.id}: ${status ?? err?.constructor?.name ?? "error"} ${String(err?.message ?? "").slice(0, 120)}`);
+        // Transient (timeout, 429, 5xx, bad JSON): up to two backoff retries on this provider, then move on.
+        const transient = status === undefined || status === 429 || status >= 500;
+        if (transient && transientRetries < 2) {
+          await new Promise((r) => setTimeout(r, 600 * ++transientRetries));
+          continue;
+        }
+        break;
       }
     }
   }

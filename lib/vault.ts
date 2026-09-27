@@ -56,9 +56,9 @@ export function mergeVault(cur: VaultShape, u: PlanUpdates): VaultShape {
     vibe: union(cur.vibe, u.vibe),
     maxTravelMinutes: pick(u.maxTravelMinutes, cur.maxTravelMinutes),
     privateNote:
-      u.privateNote === undefined || u.privateNote === null
+      u.privateNote === undefined || u.privateNote === null || (cur.privateNote ?? "").includes(u.privateNote.trim())
         ? cur.privateNote
-        : [cur.privateNote, u.privateNote].filter(Boolean).join(" ").slice(0, 400),
+        : [cur.privateNote, u.privateNote.trim()].filter(Boolean).join(" ").slice(0, 400),
   };
 }
 

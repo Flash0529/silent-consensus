@@ -24,6 +24,8 @@ type CircleIn = {
   }[];
   plans?: {
     id: string;
+    kind?: string;
+    content?: unknown;
     version: number;
     title: string;
     dateLabel: string;
@@ -39,6 +41,26 @@ type CircleIn = {
 export type GroupStop = { time: string; name: string; note: string; demoVenue: boolean };
 
 export type GroupSafeCircle = ReturnType<typeof toGroupSafe>;
+
+const strs = (x: unknown, max = 8) => (Array.isArray(x) ? x.filter((s) => typeof s === "string").slice(0, max) : []) as string[];
+
+/** Allowlist copy of a mediation card (already leak-checked). */
+function safeCard(content: unknown) {
+  if (!content || typeof content !== "object") return null;
+  const c = content as Record<string, unknown>;
+  const guide = (c.conversationGuide ?? {}) as Record<string, unknown>;
+  return {
+    title: String(c.title ?? ""),
+    commonGround: strs(c.commonGround),
+    whatMatters: strs(c.whatMatters),
+    proposal: (Array.isArray(c.proposal) ? c.proposal : []).slice(0, 6).map((p) => ({
+      step: String((p as Record<string, unknown>)?.step ?? ""),
+      detail: String((p as Record<string, unknown>)?.detail ?? ""),
+    })),
+    conversationGuide: { groundRules: strs(guide.groundRules), openers: strs(guide.openers) },
+    checkIn: String(c.checkIn ?? ""),
+  };
+}
 
 function safeStops(stops: unknown): GroupStop[] {
   if (!Array.isArray(stops)) return [];
@@ -58,11 +80,12 @@ export function toGroupSafe(circle: CircleIn) {
     .filter((p) => p.status !== "SUPERSEDED")
     .sort((a, b) => b.version - a.version)[0];
   const votes = current?.votes ?? [];
-  const voteCounts = { in: 0, differentTime: 0, tweak: 0 };
+  const voteCounts = { in: 0, differentTime: 0, tweak: 0, notReady: 0 };
   for (const v of votes) {
     if (v.choice === "IN") voteCounts.in++;
     else if (v.choice === "DIFFERENT_TIME") voteCounts.differentTime++;
     else if (v.choice === "TWEAK") voteCounts.tweak++;
+    else if (v.choice === "NOT_READY") voteCounts.notReady++;
   }
   const voted = new Set(votes.map((v) => v.memberId));
 
@@ -88,6 +111,8 @@ export function toGroupSafe(circle: CircleIn) {
     plan: current
       ? {
           id: current.id,
+          kind: (current.kind ?? "PLAN") as "PLAN" | "MEDIATE",
+          card: current.kind === "MEDIATE" ? safeCard(current.content) : null,
           version: current.version,
           title: current.title,
           dateLabel: current.dateLabel,
@@ -110,9 +135,12 @@ export const groupInclude = {
   },
   plans: {
     orderBy: { version: "desc" as const },
+    where: { status: { not: "SUPERSEDED" } },
     take: 1,
     select: {
       id: true,
+      kind: true,
+      content: true,
       version: true,
       title: true,
       dateLabel: true,

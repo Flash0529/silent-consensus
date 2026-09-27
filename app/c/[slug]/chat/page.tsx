@@ -12,10 +12,14 @@ import { OptionCard } from "@/components/OptionCard";
 import { ConfirmChips } from "@/components/ConfirmChips";
 import { Composer } from "@/components/Composer";
 import { PrimaryPill } from "@/components/PrimaryPill";
+import { ChipInCard, type ChipInState } from "@/components/ChipInCard";
 import { api, fetcher, withAs } from "@/lib/client";
 import type { OwnMessage } from "@/lib/ai/interview";
 
 type ChatData = {
+  chipIn: ChipInState | null;
+  myVote: string | null;
+  myBaseCents: number | null;
   me: { id: string; name: string; interviewStatus: string; isOrganizer: boolean };
   circle: { kind: "PLAN" | "MEDIATE"; title: string; status: string };
   messages: OwnMessage[];
@@ -26,9 +30,12 @@ type PostRes = { messages: OwnMessage[]; error: string | null; trouble: string |
 export default function ChatPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const key = `/api/me/chat?c=${slug}`;
-  const { data, error, mutate } = useSWR<ChatData>(key, fetcher, { refreshInterval: 2000, revalidateOnFocus: false });
   const [pending, setPending] = useState<string | null>(null);
   const [thinking, setThinking] = useState(false);
+  const { data, error, mutate } = useSWR<ChatData>(key, fetcher, {
+    refreshInterval: thinking ? 0 : 2000,
+    revalidateOnFocus: false,
+  });
   const [trouble, setTrouble] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -69,6 +76,23 @@ export default function ChatPage({ params }: { params: Promise<{ slug: string }>
   const done = data?.me.interviewStatus === "DONE";
   const paused = data?.circle.status === "PAUSED";
   const lastHushIdx = msgs.map((m) => m.role).lastIndexOf("HUSH");
+  const lastHush = msgs[lastHushIdx];
+  const inFollowup = !!lastHush && (lastHush.topic === "followup" || lastHush.topic === "followup-more");
+  const hasPlan = data?.circle.status === "PROPOSED" || data?.circle.status === "CONFIRMED";
+
+  const chipIn = async (cents: number) => {
+    if (thinking) return;
+    setThinking(true);
+    setTrouble(null);
+    try {
+      await api(`/api/me/chipin?c=${slug}`, { method: "POST", body: JSON.stringify({ amountCents: cents }) });
+      await mutate();
+    } catch (e) {
+      setTrouble(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setThinking(false);
+    }
+  };
 
   return (
     <main className="relative flex h-dvh flex-col">
@@ -90,7 +114,14 @@ export default function ChatPage({ params }: { params: Promise<{ slug: string }>
           if (m.role === "MEMBER") return <MemberBubble key={m.id}>{m.transcript ?? m.content}</MemberBubble>;
           const next = msgs[i + 1];
           const answered = next?.role === "MEMBER" ? m.options?.indexOf(next.content) ?? -1 : -1;
-          const live = i === lastHushIdx && !done && !paused && !thinking;
+          const live = i === lastHushIdx && (!done || inFollowup) && !paused && !thinking;
+          if (m.kind === "CHIPIN") {
+            const st = data?.chipIn;
+            if (!st || st.responded) return null;
+            if (!st.open)
+              return <HushBubble key={m.id}>The quiet pool is already full. Thank you for being ready to help.</HushBubble>;
+            return <ChipInCard key={m.id} state={st} baseCents={data?.myBaseCents ?? 0} onSubmit={chipIn} busy={thinking} />;
+          }
           const options = m.options?.length ? (
             <OptionCard
               question={m.chips?.length ? undefined : m.content}
@@ -133,12 +164,22 @@ export default function ChatPage({ params }: { params: Promise<{ slug: string }>
         <div ref={bottom} />
       </div>
 
-      {done ? (
+      {done && !inFollowup ? (
         <div className="flex flex-col gap-2 px-[18px] pb-[max(28px,env(safe-area-inset-bottom))] pt-2">
-          <PrimaryPill href={withAs(`/c/${slug}`)}>See the group</PrimaryPill>
-          <Link href={withAs(`/c/${slug}`)} className="sr-only">
-            Group status
-          </Link>
+          {hasPlan && data?.myVote ? (
+            <>
+              <PrimaryPill href={withAs(`/c/${slug}/share`)}>
+                {data.circle.kind === "MEDIATE" ? "My private notes" : "My share"}
+              </PrimaryPill>
+              <Link href={withAs(`/c/${slug}`)} className="py-1 text-center text-body font-medium text-muted">
+                {data.circle.kind === "MEDIATE" ? "See the way forward" : "See the plan"}
+              </Link>
+            </>
+          ) : (
+            <PrimaryPill href={withAs(`/c/${slug}`)}>
+              {hasPlan ? (data?.circle.kind === "MEDIATE" ? "See the way forward" : "See the plan") : "See the group"}
+            </PrimaryPill>
+          )}
         </div>
       ) : (
         !paused && <Composer onSend={(t) => send({ text: t }, t)} disabled={thinking || !data} />

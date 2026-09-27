@@ -65,3 +65,15 @@ describe("mediation rules", () => {
     "Check in together for 15 minutes in two weeks",
   ])("passes: %s", (t) => expect(fails(t, mediate)).toBe(false));
 });
+
+describe("why-lines are reasons", () => {
+  const ctx = (reasons: string[]): GuardContext => ({ ...plan, reasons });
+  it.each(["Step-free access throughout the route", "Meal choices suit varied dietary preferences", "Nothing built around drinking", "Halal options everywhere"])(
+    "fails: %s",
+    (t) => expect(ruleCheck([t], ctx([t])).length).toBeGreaterThan(0),
+  );
+  it.each(["Fits every budget Hush heard", "Easy for everyone to get around", "Food the whole group can eat", "Chill, outdoors, and unhurried"])(
+    "passes: %s",
+    (t) => expect(ruleCheck([t], ctx([t]))).toEqual([]),
+  );
+});

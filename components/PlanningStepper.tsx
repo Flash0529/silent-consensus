@@ -1,25 +1,36 @@
 import { HushMascot } from "./HushMascot";
 import { CheckIcon } from "./Icons";
 
-const ORDER = ["READING", "FILTERING", "COMPOSING", "BALANCING", "CHECKING", "DONE"];
+const PLAN_ORDER = ["READING", "FILTERING", "COMPOSING", "BALANCING", "CHECKING", "DONE"];
+const MEDIATE_ORDER = ["READING", "MAPPING", "DRAFTING", "CHECKING", "DONE"];
 
-type Props = { stage: string; memberCount: number; venueCount?: number | null };
+type Props = { stage: string; memberCount: number; venueCount?: number | null; kind?: "PLAN" | "MEDIATE" };
 
-export function PlanningStepper({ stage, memberCount, venueCount }: Props) {
-  const at = ORDER.indexOf(stage);
-  const steps = [
-    { label: `Read ${memberCount} private chats`, until: 1 },
-    { label: venueCount ? `Found ${venueCount} places that fit everyone` : "Finding places that fit everyone", until: 3 },
-    { label: "Balancing everyone's costs", until: 4 },
-    { label: "Checking nothing private shows", until: 5 },
-  ];
-  const starts = [0, 1, 3, 4];
+export function PlanningStepper({ stage, memberCount, venueCount, kind = "PLAN" }: Props) {
+  const mediate = kind === "MEDIATE";
+  const at = (mediate ? MEDIATE_ORDER : PLAN_ORDER).indexOf(stage);
+  const steps = mediate
+    ? [
+        { label: `Heard ${memberCount} sides privately`, until: 1 },
+        { label: "Found common ground", until: 2 },
+        { label: "Drafted a way forward", until: 3 },
+        { label: "Checking nothing private shows", until: 4 },
+      ]
+    : [
+        { label: `Read ${memberCount} private chats`, until: 1 },
+        { label: venueCount ? `Found ${venueCount} places that fit everyone` : "Finding places that fit everyone", until: 3 },
+        { label: "Balancing everyone's costs", until: 4 },
+        { label: "Checking nothing private shows", until: 5 },
+      ];
+  const starts = mediate ? [0, 1, 2, 3] : [0, 1, 3, 4];
 
   return (
     <div className="flex flex-col gap-[18px] rounded-card bg-bubble p-5">
       <div className="flex items-center gap-[10px]">
         <HushMascot size={36} />
-        <p className="text-question">{stage === "DONE" ? "Hush made a plan" : "Hush is planning"}</p>
+        <p className="text-question">
+          {stage === "FAILED" ? "Hush got stuck" : mediate ? "Hush is finding a way forward" : stage === "DONE" ? "Hush made a plan" : "Hush is planning"}
+        </p>
       </div>
       <ol className="flex flex-col gap-[14px]" aria-live="polite">
         {steps.map((s, i) => {

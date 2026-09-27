@@ -112,7 +112,7 @@ describe("toGroupSafe", () => {
       demoVenue: true,
     });
     expect(g.members.find((m) => m.name === "Maya")?.hasVoted).toBe(true);
-    expect(g.plan?.voteCounts).toEqual({ in: 0, differentTime: 0, tweak: 1 });
+    expect(g.plan?.voteCounts).toEqual({ in: 0, differentTime: 0, tweak: 1, notReady: 0 });
   });
 
   it("only exposes allowlisted member keys", () => {

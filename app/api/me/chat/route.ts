@@ -6,6 +6,7 @@ import { jsonError, parseBody } from "@/lib/http";
 import { ensureOpening, handleTurn, toOwnMessage } from "@/lib/ai/interview";
 import { rateLimit } from "@/lib/ratelimit";
 import { HUSH_TROUBLE } from "@/lib/ai/client";
+import { myShareView } from "@/lib/mine";
 
 export const maxDuration = 60;
 
@@ -19,8 +20,12 @@ export async function GET(req: Request) {
   if (!me) return jsonError("Not a member of this plan", 401);
   await ensureOpening(me);
   const messages = await db.message.findMany({ where: { memberId: me.id }, orderBy: { createdAt: "asc" } });
+  const share = me.circle.status === "PROPOSED" || me.circle.status === "CONFIRMED" ? await myShareView(me.id, me.circleId) : null;
   return NextResponse.json(
     {
+      chipIn: share?.chipIn ?? null,
+      myVote: share?.myVote ?? null,
+      myBaseCents: share?.money?.baseCents ?? null,
       me: { id: me.id, name: me.name, interviewStatus: me.interviewStatus, isOrganizer: me.id === me.circle.organizerId },
       circle: { kind: me.circle.kind, title: me.circle.title, status: me.circle.status },
       messages: messages.map(toOwnMessage),

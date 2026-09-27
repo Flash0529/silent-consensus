@@ -14,6 +14,8 @@ export type GuardMember = {
 };
 
 export type GuardContext = {
+  /** Texts that explain WHY (e.g. "Why this works"). Any sensitive topic in them is a leak. */
+  reasons?: string[];
   members: GuardMember[];
   allowedCents: number[]; // public numbers (per-person cost, item prices)
   mode: "PLAN" | "MEDIATE";
@@ -27,7 +29,7 @@ const SENSITIVE = [
   // alcohol
   "drink", "drinking", "drinks", "sober", "sobriety", "alcohol", "booze", "recovery",
   // health, disability
-  "wheelchair", "disab", "mobility", "accessible", "step-free", "stairs", "allerg", "injur", "health", "medical",
+  "wheelchair", "disab", "mobility", "accessib", "step-free", "stairs", "allerg", "injur", "health", "medical", "dietary",
   "anxiety", "anxious", "panic", "depress", "sick", "illness", "pregnan",
   // religion, diet
   "halal", "kosher", "religio", "muslim", "jewish", "hindu", "faith", "pray", "fasting", "vegetarian", "vegan", "diet",
@@ -115,6 +117,13 @@ export function ruleCheck(texts: string[], ctx: GuardContext): Leak[] {
       const grams = ngrams(lower, ctx.mode === "MEDIATE" ? 5 : 4);
       if (grams.some((g) => privateGrams.has(g))) leaks.push({ text: s, reason: "Repeats words from a private chat" });
     }
+  }
+  // "Why" lines are reasons by definition: they may not name any sensitive topic,
+  // except the generic "every budget" / "everyone's budget" phrasing.
+  for (const r of ctx.reasons ?? []) {
+    const cleaned = r.replace(/\b(every|everyone'?s|each person'?s|all) budgets?\b/gi, "");
+    const t = hasTerm(cleaned, SENSITIVE);
+    if (t) leaks.push({ text: r, reason: `A "why" line mentions a private topic ("${t}")` });
   }
   // De-duplicate identical findings.
   const seen = new Set<string>();

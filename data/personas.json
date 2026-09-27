@@ -1,0 +1,136 @@
+{
+  "hangout": {
+    "circle": {
+      "title": "Saturday night",
+      "activity": "dinner",
+      "area": "Midtown Atlanta",
+      "weekday": 6,
+      "start": 18,
+      "end": 23
+    },
+    "members": [
+      {
+        "key": "omar",
+        "name": "Omar",
+        "organizer": true,
+        "facts": [
+          "Organizer of the plan",
+          "Eats halal only",
+          "Budget up to $40, happy to spend",
+          "Drinks are fine",
+          "No access needs",
+          "Free all evening",
+          "Likes chill, easygoing nights"
+        ],
+        "style": "friendly, brief",
+        "script": {
+          "budget": "Up to $40 is fine."
+        }
+      },
+      {
+        "key": "maya",
+        "name": "Maya",
+        "facts": [
+          "Budget under $15, and money is tight",
+          "Has skipped the last few dinners because of cost",
+          "Eats anything",
+          "Drinks are fine but not needed",
+          "No access needs",
+          "Free all evening",
+          "Likes being outdoors"
+        ],
+        "style": "a little shy, honest",
+        "script": {
+          "budget": "Under 15 honestly. It's why I keep skipping dinners."
+        }
+      },
+      {
+        "key": "priya",
+        "name": "Priya",
+        "facts": [
+          "Doesn't drink alcohol at all",
+          "Budget up to $30",
+          "Eats anything",
+          "No access needs",
+          "Free all evening",
+          "Likes relaxed places"
+        ],
+        "style": "warm, direct",
+        "script": {
+          "budget": "Up to $30."
+        }
+      },
+      {
+        "key": "jordan",
+        "name": "Jordan",
+        "facts": [
+          "Uses a wheelchair, needs step-free places",
+          "Free after 6 PM",
+          "Budget up to $35",
+          "Eats anything",
+          "Drinks are fine"
+        ],
+        "style": "upbeat, efficient",
+        "script": {
+          "any": "I use a wheelchair, so step-free places only. And I'm free any time after six."
+        }
+      }
+    ]
+  },
+  "mediation": {
+    "circle": {
+      "title": "The apartment",
+      "topic": "The apartment",
+      "days": 7
+    },
+    "members": [
+      {
+        "key": "jordan",
+        "name": "Jordan",
+        "organizer": true,
+        "facts": [
+          "Started this mediation",
+          "Wants a clear chores system",
+          "Hates conflict and tension at home",
+          "Would make and maintain a chore chart",
+          "Nothing is off-limits"
+        ],
+        "style": "calm, conflict-avoidant"
+      },
+      {
+        "key": "omar",
+        "name": "Omar",
+        "facts": [
+          "Feels he does most of the dishes and is starting to resent it",
+          "Needs chores to feel fair",
+          "Would take out the trash and recycling every week",
+          "Off-limits: don't say he's been keeping score"
+        ],
+        "style": "frustrated but fair"
+      },
+      {
+        "key": "maya",
+        "name": "Maya",
+        "facts": [
+          "Works late shifts at a second job, so she cooks around midnight",
+          "Feels embarrassed and judged about it",
+          "Needs to be able to cook and eat late",
+          "Would cook quieter meals and clean up the same night",
+          "Off-limits: the second job and money"
+        ],
+        "style": "tired, a bit defensive at first, then open"
+      },
+      {
+        "key": "priya",
+        "name": "Priya",
+        "facts": [
+          "Gets anxious when guests show up unannounced",
+          "Needs a heads-up before guests come over",
+          "Would host fewer late guests herself and keep common areas tidy",
+          "Off-limits: her anxiety"
+        ],
+        "style": "gentle, careful"
+      }
+    ]
+  }
+}
