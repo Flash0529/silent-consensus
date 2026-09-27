@@ -78,6 +78,7 @@ export default function ChatPage({ params }: { params: Promise<{ slug: string }>
   const lastHushIdx = msgs.map((m) => m.role).lastIndexOf("HUSH");
   const lastHush = msgs[lastHushIdx];
   const inFollowup = !!lastHush && (lastHush.topic === "followup" || lastHush.topic === "followup-more");
+  const askingRemember = lastHush?.topic === "remember";
   const hasPlan = data?.circle.status === "PROPOSED" || data?.circle.status === "CONFIRMED";
 
   const chipIn = async (cents: number) => {
@@ -114,7 +115,7 @@ export default function ChatPage({ params }: { params: Promise<{ slug: string }>
           if (m.role === "MEMBER") return <MemberBubble key={m.id}>{m.transcript ?? m.content}</MemberBubble>;
           const next = msgs[i + 1];
           const answered = next?.role === "MEMBER" ? m.options?.indexOf(next.content) ?? -1 : -1;
-          const live = i === lastHushIdx && (!done || inFollowup) && !paused && !thinking;
+          const live = i === lastHushIdx && (!done || inFollowup || askingRemember) && !paused && !thinking;
           if (m.kind === "CHIPIN") {
             const st = data?.chipIn;
             if (!st || st.responded) return null;

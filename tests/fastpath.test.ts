@@ -61,3 +61,23 @@ describe("merge", () => {
     expect(p.needs).toEqual(["sleep"]);
   });
 });
+
+import { chipsFromVault } from "@/lib/vault";
+
+describe("chipsFromVault", () => {
+  const empty = {
+    budgetCapCents: null, dietary: [], alcohol: null, stepFreeRequired: null,
+    availableWindows: null, noise: null, vibe: [], maxTravelMinutes: null, privateNote: null,
+  };
+  it("returning Omar", () =>
+    expect(chipsFromVault({ ...empty, budgetCapCents: 4000, dietary: ["halal"], alcohol: "fine", vibe: ["chill"] })).toEqual([
+      "Up to $40",
+      "Halal",
+      "Chill",
+    ]));
+  it("Jordan's voice answers", () =>
+    expect(
+      chipsFromVault({ ...empty, stepFreeRequired: true, availableWindows: [{ day: "Saturday", start: "18:00", end: "23:59" }] }),
+    ).toEqual(["Step-free places only", "Free after 6 PM"]));
+  it("nothing saved", () => expect(chipsFromVault(empty)).toEqual(["No special needs"]));
+});

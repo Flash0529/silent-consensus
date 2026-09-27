@@ -5,7 +5,23 @@ import { newSlug } from "@/lib/slug";
 import { avatarFor } from "@/lib/avatars";
 import { etDate, nextWeekday } from "@/lib/dates";
 
-export type Persona = { key: string; name: string; organizer?: boolean; facts: string[]; style: string; script?: Record<string, string> };
+export type SavedPrefs = {
+  budgetCapCents: number | null;
+  dietary: string[];
+  alcohol: string | null;
+  stepFreeRequired: boolean | null;
+  noise: string | null;
+  vibe: string[];
+};
+export type Persona = {
+  key: string;
+  name: string;
+  organizer?: boolean;
+  facts: string[];
+  style: string;
+  script?: Record<string, string>;
+  returning?: SavedPrefs; // demo: preferences this persona saved on a previous plan
+};
 export type Story = "hangout" | "mediation";
 
 export function personaFor(story: Story, key: string): Persona | undefined {
@@ -47,8 +63,13 @@ export async function seedStory(story: Story) {
   });
   const created = [];
   for (const [i, p] of members.entries()) {
+    // Returning personas get a saved profile (no cookie: presenter iframes drive them).
+    const profile = p.returning
+      ? await db.profile.create({ data: { name: p.name, tokenHash: newDeviceToken().tokenHash, ...p.returning } })
+      : null;
     const m = await db.member.create({
       data: {
+        profileId: profile?.id ?? null,
         circleId: circle.id,
         name: p.name,
         avatarColor: story === "hangout" ? avatarFor(i) : avatarFor(["omar", "maya", "priya", "jordan"].indexOf(p.key)),

@@ -33,12 +33,13 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
   const forget = async () => {
     setBusy(true);
     try {
-      const { forgotten } = await api<{ forgotten: number }>("/api/me/forget", { method: "POST" });
-      setResult(
-        forgotten === 0
-          ? "This device wasn't remembering any plans."
-          : `Done. This device no longer remembers ${forgotten === 1 ? "your plan" : `your ${forgotten} plans`}.`,
-      );
+      const res = await api<{ forgotten: number; profileDeleted: boolean }>("/api/me/forget", { method: "POST" });
+      const plans = res.forgotten - (res.profileDeleted ? 1 : 0);
+      const parts = [
+        plans > 0 ? `no longer remembers ${plans === 1 ? "your plan" : `your ${plans} plans`}` : "",
+        res.profileDeleted ? "your saved preferences are deleted" : "",
+      ].filter(Boolean);
+      setResult(parts.length ? `Done. This device ${parts.join(", and ")}.` : "This device wasn't remembering anything.");
     } catch (e) {
       setResult(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -152,8 +153,9 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             ) : (
               <>
                 <p className="text-body text-ink-2">
-                  This signs this device out of every plan it has joined. Your answers stay with Hush and the group still
-                  counts you, but you won't be able to reopen those chats here.
+                  This signs this device out of every plan it has joined and deletes any preferences Hush remembered here.
+                  Answers in current plans stay with Hush and the group still counts you, but you won't be able to reopen
+                  those chats here.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <button

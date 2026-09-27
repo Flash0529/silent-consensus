@@ -110,6 +110,8 @@ model Member {
   role            Role            @default(MEMBER)
   interviewStatus InterviewStatus @default(NOT_STARTED)
   persona         String?
+  profileId       String?
+  profile         Profile?        @relation(fields: [profileId], references: [id], onDelete: SetNull)
   paidAt          DateTime?
   createdAt       DateTime        @default(now())
   messages        Message[]
@@ -246,4 +248,21 @@ model AiTrace {
   createdAt DateTime @default(now())
 
   @@index([circleId, createdAt])
+}
+
+// Opt-in, per-device memory of lasting preferences ("remember me for next time").
+// Linked to a phone by the qc_profile cookie, never by name. Hangout mode only.
+model Profile {
+  id               String   @id @default(cuid())
+  tokenHash        String   @unique
+  name             String
+  budgetCapCents   Int?
+  dietary          String[]
+  alcohol          String?
+  stepFreeRequired Boolean?
+  noise            String?
+  vibe             String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  members          Member[]
 }

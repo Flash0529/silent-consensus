@@ -152,11 +152,19 @@ async function complete(p: Provider, args: CallArgs<z.ZodType>, messages: Msg[])
     messages: withSchema,
     response_format: responseFormat(p, args.task, args.schema),
     temperature: args.temperature ?? 0.5,
-    max_tokens: args.maxTokens ?? 1200,
+    // Reasoning tokens count against max_tokens, so reasoning providers get headroom for the answer.
+    max_tokens: (args.maxTokens ?? 1200) + (p.supportsReasoningEffort ? 3000 : 0),
   };
-  if (p.supportsReasoningEffort && args.reasoningEffort)
-    (body as unknown as Record<string, unknown>).reasoning_effort = args.reasoningEffort;
+  if (p.supportsReasoningEffort && args.reasoningEffort) {
+    // Measured Sep 26: muse-spark at low/medium can spend its whole budget reasoning and return no
+    // content (finish_reason "length"). "minimal" answers reliably in ~2-13s. Override with META_REASONING.
+    const effort = process.env.META_REASONING ?? "minimal";
+    (body as unknown as Record<string, unknown>).reasoning_effort = effort;
+  }
   const res = await p.client.chat.completions.create(body, { timeout: TIMEOUT_MS });
+  if (res?.choices?.[0]?.finish_reason === "length" && !res.choices[0].message?.content) {
+    throw Object.assign(new Error("Ran out of tokens before answering"), { status: 502 });
+  }
   if (!res?.choices?.length) {
     // OpenRouter can answer 200 with an error body (upstream overload). Treat it as transient.
     const upstream = (res as unknown as { error?: { message?: string; code?: number } })?.error;

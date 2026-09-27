@@ -6,7 +6,8 @@ import { MediationInterviewTurn, PlanInterviewTurn } from "@/lib/ai/schemas";
 import { mediationInterviewPrompt, planInterviewPrompt } from "@/lib/ai/prompts/interview";
 import { parseAlcohol, parseBudget, parseStepFree, parseTime } from "@/lib/ai/fastpath";
 import { SAFETY_REPLY, screenText, stricter } from "@/lib/ai/safety";
-import { mergePerspective, mergeVault, type PerspectiveShape, type VaultShape } from "@/lib/vault";
+import { chipsFromVault, mergePerspective, mergeVault, type PerspectiveShape, type VaultShape } from "@/lib/vault";
+import { hasPrefs, prefsFromVault, rememberOnThisDevice } from "@/lib/profile";
 import { onMemberDone } from "@/lib/pipeline";
 
 type MemberWithCircle = Member & { circle: Circle };
@@ -89,6 +90,22 @@ export async function ensureOpening(member: MemberWithCircle) {
   const intro = isOrg
     ? `Hey ${member.name}! Let's get your answers in for ${c.title} too. This chat is just between us, even from the group.`
     : `Hey ${member.name}! ${org}'s planning ${c.title}. This chat is just between us.`;
+
+  // Returning on this phone with saved preferences: one "still right?" tap instead of the interview.
+  const profile = member.profileId ? await db.profile.findUnique({ where: { id: member.profileId } }) : null;
+  if (profile && hasPrefs(profile)) {
+    return save(member.id, [
+      { role: "HUSH", content: intro, topic: "intro" },
+      {
+        role: "HUSH",
+        content: `Welcome back! Last time you told me:\nStill right for ${c.title}?`,
+        chips: chipsFromVault({ ...profile, availableWindows: null, maxTravelMinutes: null, privateNote: null }),
+        options: ["That's right", "Change something"],
+        topic: "returning",
+      },
+    ]);
+  }
+
   return save(member.id, [
     { role: "HUSH", content: intro, topic: "intro" },
     { role: "HUSH", content: "What's comfortable to spend, all in?", options: PLAN_BUDGET_OPTIONS, topic: "budget" },
@@ -201,18 +218,72 @@ export async function handleTurn(
     const rule = screenText(text);
     if (rule === "stop") return { messages: [...created, ...(await safetyStop(member))] };
 
+    // Returning member: "That's right" reuses the saved preferences as this plan's answers.
+    if (lastTopic === "returning" && member.profileId) {
+      const profile = await db.profile.findUnique({ where: { id: member.profileId } });
+      if (profile) {
+        const cur = await loadVault(member.id);
+        await writeVault(member.id, { ...cur, ...prefsFromVault({ ...profile, availableWindows: null, maxTravelMinutes: null, privateNote: null }) });
+      }
+      if (/^that'?s right$/i.test(text)) {
+        created.push(
+          ...(await save(member.id, [
+            {
+              role: "HUSH",
+              content: "Perfect, that's all I need. No one will know any of it came from you. I'll let you know when the plan's ready.",
+              topic: "done",
+            },
+          ])),
+        );
+        await markDone(member);
+        return { messages: created };
+      }
+      // "Change something" falls through to the model, which now sees the saved answers as KNOWN.
+    }
+
     // Deterministic confirm / consent answers.
     if (lastTopic === "confirm" && /^that'?s right$/i.test(text)) {
+      const msgs: NewMsg[] = [
+        {
+          role: "HUSH",
+          content: "Perfect. I'll plan around this, and no one will know it came from you. I'll let you know when the plan's ready.",
+          topic: "done",
+        },
+      ];
+      if (member.profileId) {
+        // Already opted in on this phone: keep the saved preferences current.
+        await db.profile.update({ where: { id: member.profileId }, data: prefsFromVault(await loadVault(member.id)) }).catch(() => {});
+      } else if (c.kind === "PLAN") {
+        msgs.push({
+          role: "HUSH",
+          content: "Want me to remember this for next time? Only this phone can use it.",
+          options: ["Yes, remember me", "No thanks"],
+          topic: "remember",
+        });
+      }
+      created.push(...(await save(member.id, msgs)));
+      await markDone(member);
+      return { messages: created };
+    }
+
+    // Opt-in memory, offered once after confirming.
+    if (lastTopic === "remember") {
+      const yes = /^yes/i.test(text);
+      if (yes && !member.profileId) {
+        const profile = await rememberOnThisDevice(member.name, prefsFromVault(await loadVault(member.id)));
+        await db.member.update({ where: { id: member.id }, data: { profileId: profile.id } });
+      }
       created.push(
         ...(await save(member.id, [
           {
             role: "HUSH",
-            content: "Perfect. I'll plan around this, and no one will know it came from you. I'll let you know when the plan's ready.",
-            topic: "done",
+            content: yes
+              ? "Done. Next time on this phone, it's one tap. You can make me forget any time in Settings."
+              : "No problem. I won't keep anything after this plan.",
+            topic: "remember-done",
           },
         ])),
       );
-      await markDone(member);
       return { messages: created };
     }
     if (lastTopic === "consent" && /^(yes, use this|keep all of this private)$/i.test(text)) {
@@ -364,22 +435,6 @@ function gistFromParts(p: PerspectiveShape) {
     p.offers.length ? `Would ${p.offers.slice(0, 2).join(" and ")}.` : "",
   ].filter(Boolean);
   return parts.join(" ") || "Wants things to feel fair and calm.";
-}
-
-function chipsFromVault(v: VaultShape) {
-  const chips: string[] = [];
-  if (v.budgetCapCents !== null) chips.push(`Up to $${Math.round(v.budgetCapCents / 100)}`);
-  for (const d of v.dietary) chips.push(d.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
-  if (v.alcohol === "none") chips.push("No alcohol");
-  else if (v.alcohol === "prefer_none") chips.push("Not a bar night");
-  if (v.stepFreeRequired) chips.push("Step-free places only");
-  const w = Array.isArray(v.availableWindows) ? (v.availableWindows as { start?: string }[])[0] : undefined;
-  if (w?.start && w.start !== "00:00") {
-    const h = Number(w.start.slice(0, 2));
-    chips.push(`Free after ${((h + 11) % 12) + 1}${w.start.slice(3) === "00" ? "" : ":" + w.start.slice(3)} ${h >= 12 ? "PM" : "AM"}`);
-  }
-  if (v.noise === "quiet") chips.push("Somewhere quiet");
-  return chips.length ? chips.slice(0, 5) : ["No special needs"];
 }
 
 function turnMessages(

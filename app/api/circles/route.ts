@@ -5,6 +5,7 @@ import { newDeviceToken, setMemberCookie } from "@/lib/identity";
 import { parseBody } from "@/lib/http";
 import { newSlug } from "@/lib/slug";
 import { avatarFor } from "@/lib/avatars";
+import { getDeviceProfile } from "@/lib/profile";
 
 const Body = z.object({
   organizerName: z.string().trim().min(1).max(30),
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
 
   const { token, tokenHash } = newDeviceToken();
   const slug = newSlug();
+  const profile = await getDeviceProfile();
   const circle = await db.circle.create({
     data: {
       ...rest,
@@ -32,7 +34,7 @@ export async function POST(req: Request) {
       windowStart,
       windowEnd,
       members: {
-        create: { name: organizerName, avatarColor: avatarFor(0), tokenHash, role: "ORGANIZER" },
+        create: { name: organizerName, avatarColor: avatarFor(0), tokenHash, role: "ORGANIZER", profileId: profile?.id ?? null },
       },
     },
     include: { members: true },

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getMember } from "@/lib/identity";
 import { groupInclude, toGroupSafe } from "@/lib/serialize";
 import { JoinSheet } from "./JoinSheet";
+import { getDeviceProfile } from "@/lib/profile";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -21,5 +22,6 @@ export default async function JoinPage({ params }: { params: Promise<{ slug: str
       </main>
     );
   if (await getMember(slug)) redirect(`/c/${slug}/chat`);
-  return <JoinSheet circle={toGroupSafe(circle)} />;
+  const profile = await getDeviceProfile();
+  return <JoinSheet circle={toGroupSafe(circle)} rememberedName={profile?.name ?? null} />;
 }

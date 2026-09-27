@@ -13,7 +13,8 @@ export async function personaReply(
 ) {
   const script = p.script?.[last.topic ?? ""] ?? (history.filter((h) => h.role === "MEMBER").length === 0 ? p.script?.any : undefined);
   if (script) return { text: script };
-  if (last.topic === "confirm" || last.topic === "consent") return { optionIndex: 0 };
+  if (last.topic === "confirm" || last.topic === "consent" || last.topic === "returning" || last.topic === "remember")
+    return { optionIndex: 0 };
 
   const { data } = await callLLM({
     task: "persona",

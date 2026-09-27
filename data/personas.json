@@ -25,6 +25,18 @@
         "style": "friendly, brief",
         "script": {
           "budget": "Up to $40 is fine."
+        },
+        "returning": {
+          "budgetCapCents": 4000,
+          "dietary": [
+            "halal"
+          ],
+          "alcohol": "fine",
+          "stepFreeRequired": null,
+          "noise": null,
+          "vibe": [
+            "chill"
+          ]
         }
       },
       {
@@ -58,6 +70,14 @@
         "style": "warm, direct",
         "script": {
           "budget": "Up to $30."
+        },
+        "returning": {
+          "budgetCapCents": 3000,
+          "dietary": [],
+          "alcohol": "none",
+          "stepFreeRequired": null,
+          "noise": "quiet",
+          "vibe": []
         }
       },
       {

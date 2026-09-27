@@ -74,3 +74,21 @@ export function mergePerspective(cur: PerspectiveShape, u: PerspUpdates): Perspe
     gist: pick(u.gist, cur.gist),
   };
 }
+
+/** "Here's what I'll plan around" chips, built from stored answers. */
+export function chipsFromVault(v: VaultShape) {
+  const chips: string[] = [];
+  if (v.budgetCapCents !== null) chips.push(`Up to $${Math.round(v.budgetCapCents / 100)}`);
+  for (const d of v.dietary) chips.push(d.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
+  if (v.alcohol === "none") chips.push("No alcohol");
+  else if (v.alcohol === "prefer_none") chips.push("Not a bar night");
+  if (v.stepFreeRequired) chips.push("Step-free places only");
+  const w = Array.isArray(v.availableWindows) ? (v.availableWindows as { start?: string }[])[0] : undefined;
+  if (w?.start && w.start !== "00:00") {
+    const h = Number(w.start.slice(0, 2));
+    chips.push(`Free after ${((h + 11) % 12) + 1}${w.start.slice(3) === "00" ? "" : ":" + w.start.slice(3)} ${h >= 12 ? "PM" : "AM"}`);
+  }
+  if (v.noise === "quiet") chips.push("Somewhere quiet");
+  for (const t of v.vibe.slice(0, 1)) chips.push(t.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
+  return chips.length ? chips.slice(0, 6) : ["No special needs"];
+}

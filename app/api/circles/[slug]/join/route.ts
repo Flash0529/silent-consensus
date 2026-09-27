@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getMember, newDeviceToken, setMemberCookie } from "@/lib/identity";
 import { jsonError, parseBody } from "@/lib/http";
 import { avatarFor } from "@/lib/avatars";
+import { getDeviceProfile } from "@/lib/profile";
 
 const Body = z.object({ name: z.string().trim().min(1).max(30) });
 
@@ -22,7 +23,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
 
   const { token, tokenHash } = newDeviceToken();
   const member = await db.member.create({
-    data: { circleId: circle.id, name: body.data.name, avatarColor: avatarFor(circle._count.members), tokenHash },
+    data: {
+      circleId: circle.id,
+      name: body.data.name,
+      avatarColor: avatarFor(circle._count.members),
+      tokenHash,
+      profileId: (await getDeviceProfile())?.id ?? null,
+    },
   });
   await setMemberCookie(slug, member.id, token);
   return NextResponse.json({ memberId: member.id });

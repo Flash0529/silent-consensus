@@ -18,9 +18,9 @@ function joinedLine(names: string[]) {
   return `${names.slice(0, 2).join(", ")} and ${names.length - 2} others are in`;
 }
 
-export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
+export function JoinSheet({ circle, rememberedName }: { circle: GroupSafeCircle; rememberedName: string | null }) {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(rememberedName ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -118,6 +118,11 @@ export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
                 {busy ? "Joining…" : "Join"}
               </button>
             </div>
+            {rememberedName && (
+              <p className="mt-3 text-secondary text-muted">
+                Welcome back. Hush remembers your preferences on this phone, so this will be quick.
+              </p>
+            )}
             {error && <p className="mt-3 text-secondary text-danger">{error}</p>}
           </>
         )}
