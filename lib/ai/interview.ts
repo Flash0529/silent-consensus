@@ -171,6 +171,24 @@ function historyFor(msgs: Message[]) {
   });
 }
 
+/**
+ * Pacing so an interview can never loop: a topic asked twice moves on, and after
+ * enough answers Hush wraps up with what it has. Real people give vague answers too.
+ */
+export function pacingNote(history: { role: string; topic: string | null }[], kind: "PLAN" | "MEDIATE") {
+  const asked: Record<string, number> = {};
+  for (const m of history) if (m.role === "HUSH" && m.topic && !m.topic.endsWith("-ack")) asked[m.topic] = (asked[m.topic] ?? 0) + 1;
+  const answers = history.filter((m) => m.role === "MEMBER").length;
+  const finalTopic = kind === "MEDIATE" ? "consent" : "confirm";
+  const lines: string[] = [];
+  const stale = Object.entries(asked).filter(([t, n]) => n >= 2 && t !== finalTopic && t !== "intro");
+  if (stale.length)
+    lines.push(`PACING: you already asked about ${stale.map(([t]) => t).join(", ")} twice. Do not ask about those again; work with what you have and move to the next topic.`);
+  if (answers >= 8)
+    lines.push(`PACING: this has gone on long enough. Go to "${finalTopic}" NOW with whatever you know; fill gaps sensibly.`);
+  return lines.join("\n");
+}
+
 async function markDone(member: MemberWithCircle) {
   await db.member.update({ where: { id: member.id }, data: { interviewStatus: "DONE" } });
   try {
@@ -382,7 +400,7 @@ export async function handleTurn(
         schema: MediationInterviewTurn,
         reasoningEffort: "low",
         temperature: 0.6,
-        messages: [{ role: "system", content: mediationInterviewPrompt({ ...ctx, known: persp }) }, ...historyFor(history)],
+        messages: [{ role: "system", content: mediationInterviewPrompt({ ...ctx, known: persp, pacing: pacingNote(history, "MEDIATE") }) }, ...historyFor(history)],
       });
       if (stricter(screenText(text), turn.safety) === "stop") return { messages: [...created, ...(await safetyStop(member))] };
       const merged = mergePerspective(persp, turn.updates);
@@ -402,7 +420,7 @@ export async function handleTurn(
         schema: PlanInterviewTurn,
         reasoningEffort: "low",
         temperature: 0.6,
-        messages: [{ role: "system", content: planInterviewPrompt({ ...ctx, known: vault }) }, ...historyFor(history)],
+        messages: [{ role: "system", content: planInterviewPrompt({ ...ctx, known: vault, pacing: pacingNote(history, "PLAN") }) }, ...historyFor(history)],
       });
       if (stricter(screenText(text), turn.safety) === "stop") return { messages: [...created, ...(await safetyStop(member))] };
       const fast = text ? fastPlanUpdates(text, lastTopic, weekdayName(c.windowStart)) : {};

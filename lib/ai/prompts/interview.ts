@@ -9,6 +9,7 @@ type Ctx = {
   dateLabel: string;
   topic?: string | null;
   known: unknown;
+  pacing?: string;
 };
 
 const SAFETY = `SAFETY (overrides everything):
@@ -48,7 +49,7 @@ Leave a field out when unknown.
 ${SAFETY}
 
 KNOWN so far (private): ${JSON.stringify(c.known)}
-
+${c.pacing ?? ""}
 Output JSON only, matching the schema.`;
 }
 
@@ -78,6 +79,6 @@ Only set done=true after they answer the consent question.
 ${SAFETY}
 
 KNOWN so far (private): ${JSON.stringify(c.known)}
-
+${c.pacing ?? ""}
 Output JSON only, matching the schema.`;
 }

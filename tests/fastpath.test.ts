@@ -81,3 +81,16 @@ describe("chipsFromVault", () => {
     ).toEqual(["Step-free places only", "Free after 6 PM"]));
   it("nothing saved", () => expect(chipsFromVault(empty)).toEqual(["No special needs"]));
 });
+
+import { pacingNote } from "@/lib/ai/interview";
+
+describe("interview pacing", () => {
+  const h = (topics: string[], answers: number) => [
+    ...topics.map((topic) => ({ role: "HUSH", topic })),
+    ...Array.from({ length: answers }, () => ({ role: "MEMBER", topic: null })),
+  ];
+  it("moves on after a topic is asked twice", () =>
+    expect(pacingNote(h(["intro", "story", "impact", "impact-ack", "impact"], 3), "MEDIATE")).toMatch(/impact twice/));
+  it("wraps up after 8 answers", () => expect(pacingNote(h(["story"], 8), "MEDIATE")).toMatch(/"consent" NOW/));
+  it("says nothing early on", () => expect(pacingNote(h(["intro", "budget"], 1), "PLAN")).toBe(""));
+});
