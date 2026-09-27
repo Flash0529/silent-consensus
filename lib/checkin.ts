@@ -9,6 +9,7 @@ import { findVenues, venueKindOf, type Venue } from "@/lib/findplaces";
 import { budgetCents, readRoomStyle, readStyle, roomVoice, voiceFor } from "@/lib/hushstyle";
 import { helpersFor, myMoney, setupShares } from "@/lib/chipin";
 import { stripeEnabled } from "@/lib/stripe";
+import { clip, clipOrNull } from "@/lib/text";
 
 // Planning sessions: the moment Hush starts planning, everything moves to each person's private
 // Hush chat, and stays there until the plan is final.
@@ -68,14 +69,14 @@ async function say(memberId: string, topic: string, content: string, options: st
       memberId,
       role: "HUSH",
       kind: options.length ? "OPTIONS" : "TEXT",
-      content: content.slice(0, 1500),
+      content: clip(content, 1500),
       options: options.length ? options.slice(0, 5) : undefined,
       chips: card ? (card as unknown as Prisma.InputJsonValue) : undefined,
       topic,
     },
   });
 }
-const heard = (memberId: string, topic: string, content: string) => db.message.create({ data: { memberId, role: "MEMBER", kind: "TEXT", content: content.slice(0, 1500), topic } });
+const heard = (memberId: string, topic: string, content: string) => db.message.create({ data: { memberId, role: "MEMBER", kind: "TEXT", content: clip(content, 1500), topic } });
 
 /** Model call with one retry (the model sometimes answers in prose instead of JSON). */
 async function llm<S extends z.ZodType>(args: CallArgs<S>): Promise<z.infer<S> | null> {
@@ -119,7 +120,7 @@ export async function startSession(
       circleId,
       itemId: opts.itemId ?? null,
       reason: opts.reason,
-      brief: opts.brief ?? null,
+      brief: clipOrNull(opts.brief, 400),
       organizerId: opts.organizerId ?? null,
       stage: opts.intake ? "INTAKE" : "ASKING",
       replies: { create: members.map((m) => ({ memberId: m.id })) },
@@ -127,6 +128,20 @@ export async function startSession(
   });
   // Group questions about this plan are replaced by the private session.
   if (opts.itemId) await db.hushAsk.updateMany({ where: { itemId: opts.itemId, status: "OPEN" }, data: { status: "CLOSED" } });
+  try {
+    await begin(s.id, circleId, opts);
+  } catch (e) {
+    // Never leave a half-started plan behind (it would block new plans and ask nobody anything).
+    console.error("starting a plan failed; rolled back", e);
+    await db.hushCheckIn.delete({ where: { id: s.id } }).catch(() => {});
+    await db.groupMessage.deleteMany({ where: { circleId, kind: "CHECKIN", body: s.id } }).catch(() => {});
+    return null;
+  }
+  return s.id;
+}
+
+async function begin(sessionId: string, circleId: string, opts: { organizerId?: string | null; intake?: boolean }) {
+  const s = { id: sessionId };
   if (opts.intake && opts.organizerId) {
     const circle = await db.circle.findUniqueOrThrow({ where: { id: circleId }, select: { title: true, isDirect: true } });
     await say(
@@ -136,17 +151,16 @@ export async function startSession(
       ["Dinner out", "Concert, then food", "Game night", "Weekend trip", "Coffee catch-up"],
       { card: "intake" },
     );
-    return s.id;
+    return;
   }
   await announce(s.id);
-  return s.id;
 }
 export const startCheckIn = (circleId: string, itemId: string | null, reason: string) => startSession(circleId, { itemId, reason });
 export const findTimesAsk = (circleId: string, itemId: string | null) => startSession(circleId, { itemId, reason: "The group wants to find another day that works" });
 
 async function titleOf(sessionId: string) {
   const s = await db.hushCheckIn.findUniqueOrThrow({ where: { id: sessionId }, include: { item: true } });
-  return { s, title: s.item?.title ?? s.brief?.split("\n")[0]?.slice(0, 60) ?? "the plan" };
+  return { s, title: s.item?.title ?? (s.brief ? clip(s.brief.split("\n")[0], 60) : "the plan") };
 }
 
 /** Tell the group (one line + progress card) and send everyone their first private question. */
@@ -329,9 +343,9 @@ async function intakeTurn(sessionId: string, member: Member, _text: string) {
   const s = await db.hushCheckIn.findUniqueOrThrow({ where: { id: sessionId } });
   const parts = t.parts.map((p) => ({ label: p.label, kind: p.kind, startsAt: null, whenText: p.when, place: null, address: null, why: null, costCents: null, links: null, venue: null }));
   const itemData = {
-    title: t.title.slice(0, 80),
-    whenText: t.when?.slice(0, 80) ?? null,
-    details: t.notes?.slice(0, 200) ?? null,
+    title: clip(t.title, 80),
+    whenText: clipOrNull(t.when, 80),
+    details: clipOrNull(t.notes, 200),
     parts: parts as unknown as Prisma.InputJsonValue,
   };
   const item = s.itemId
@@ -614,7 +628,7 @@ async function buildPlan(sessionId: string, changes: string[] = []) {
   });
   const safe = plan && !names.some((n) => n.length >= 2 && (nameRe(n).test(plan.title) || nameRe(n).test(plan.summary)));
   const out: Proposal = safe
-    ? { title: plan!.title.slice(0, 80), summary: plan!.summary.slice(0, 400), verdict: plan!.verdict, parts: [], costCents: null }
+    ? { title: clip(plan!.title, 80), summary: clip(plan!.summary, 400), verdict: plan!.verdict, parts: [], costCents: null }
     : { title: s.item?.title ?? "The plan", summary: "Here's what works for the group.", verdict: "PARTIAL", parts: [], costCents: null };
   const rawParts = safe ? plan!.parts : ((s.item?.parts as unknown as Part[] | null) ?? [{ label: s.item?.title ?? "Plan", kind: "other" }]).map((p) => ({ ...p, startsAt: null, whenText: s.item?.whenText ?? null, search: p.label }));
 
@@ -684,7 +698,7 @@ async function confirmTurn(sessionId: string, member: Member, card: string | nul
   const key = { checkInId_memberId: { checkInId: sessionId, memberId: member.id } };
   if (card === "change") {
     const r = await db.hushCheckInReply.findUniqueOrThrow({ where: key });
-    await db.hushCheckInReply.update({ where: key, data: { confirm: "CHANGE", summary: { ...((r.summary as object) ?? {}), change: text.slice(0, 300) } } });
+    await db.hushCheckInReply.update({ where: key, data: { confirm: "CHANGE", summary: { ...((r.summary as object) ?? {}), change: clip(text, 300) } } });
     await say(member.id, topic, "Got it. I'll fit that in and show everyone an updated plan.");
     bg(() => maybeFinalize(sessionId));
     return {};
@@ -721,11 +735,11 @@ async function finalize(sessionId: string) {
   const firstPart = p.parts[0];
   const data = {
     title: p.title,
-    details: p.summary.slice(0, 200),
+    details: clip(p.summary, 200),
     parts: p.parts as unknown as Prisma.InputJsonValue,
     startsAt: firstPart?.startsAt ? new Date(firstPart.startsAt) : null,
     whenText: firstPart?.whenText ?? null,
-    place: firstPart?.place ? [firstPart.place, firstPart.address].filter(Boolean).join(", ").slice(0, 120) : null,
+    place: firstPart?.place ? clip([firstPart.place, firstPart.address].filter(Boolean).join(", "), 120) : null,
     placeMeta: firstPart?.venue ? (firstPart.venue as unknown as Prisma.InputJsonValue) : undefined,
     costCents: p.costCents,
     outcome: "ALL_IN",

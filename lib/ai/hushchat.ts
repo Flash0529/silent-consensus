@@ -5,6 +5,7 @@ import { groupAbout } from "@/lib/personmd";
 import { aiFileLines } from "@/lib/files";
 import { roomVoiceFor } from "@/lib/checkin";
 import { replying } from "@/lib/ai/detect";
+import { clip, clipOrNull } from "@/lib/text";
 
 // Hush answering in the group when someone talks to it (mentions "Hush" or replies to Hush).
 // It only knows the group chat (which everyone can see) and the pinned cards, never private answers,
@@ -66,7 +67,7 @@ async function reply(circleId: string, text: string) {
     await db.groupMessage.create({ data: { circleId, kind: "HUSH", body: "Sorry, I'm having trouble thinking right now. Try me again in a minute." } });
     return;
   }
-  await db.groupMessage.create({ data: { circleId, kind: "HUSH", body: data.reply.slice(0, 1000) } });
+  await db.groupMessage.create({ data: { circleId, kind: "HUSH", body: clip(data.reply, 1000) } });
   if (data.startPlanning) {
     const { startSession } = await import("@/lib/checkin");
     const itemId = data.itemId && items.some((i) => i.id === data.itemId) ? data.itemId : null;

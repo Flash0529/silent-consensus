@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { callLLM, LLMUnavailableError } from "@/lib/ai/client";
 import { groupAbout } from "@/lib/personmd";
 import { aiFileLines } from "@/lib/files";
+import { clip, clipOrNull } from "@/lib/text";
 
 // Hush reads the group chat on its own and notices events being planned, to-dos someone took on,
 // and decisions, then posts each as a card in the chat (kind ITEM). Nobody has to talk to Hush.
@@ -191,12 +192,12 @@ export async function detectNow(circleId: string) {
         data: {
           circleId,
           kind: f.kind,
-          title: f.title.trim().slice(0, 80),
+          title: clip(f.title.trim(), 80),
           startsAt: parseDate(f.startsAt),
-          whenText: f.whenText?.slice(0, 80) ?? null,
-          place: f.place?.slice(0, 120) ?? null,
-          owner: f.kind === "TASK" ? (f.owner?.slice(0, 40) ?? null) : null,
-          details: namesAnyone(f.details) ? null : (f.details?.slice(0, 200) ?? null),
+          whenText: clipOrNull(f.whenText, 80),
+          place: clipOrNull(f.place, 120),
+          owner: f.kind === "TASK" ? clipOrNull(f.owner, 40) : null,
+          details: namesAnyone(f.details) ? null : clipOrNull(f.details, 200),
         },
       });
       newIds.push(item.id);
@@ -218,9 +219,9 @@ export async function detectNow(circleId: string) {
       const patch: Record<string, unknown> = {};
       const when = parseDate(u.startsAt);
       if (when && +when !== +(k.startsAt ?? 0)) patch.startsAt = when;
-      if (u.whenText && u.whenText !== k.whenText) patch.whenText = u.whenText.slice(0, 80);
-      if (u.place && u.place !== k.place) patch.place = u.place.slice(0, 120);
-      if (u.title && u.title !== k.title) patch.title = u.title.slice(0, 80);
+      if (u.whenText && u.whenText !== k.whenText) patch.whenText = clip(u.whenText, 80);
+      if (u.place && u.place !== k.place) patch.place = clip(u.place, 120);
+      if (u.title && u.title !== k.title) patch.title = clip(u.title, 80);
       if (u.status && u.status !== k.status) patch.status = u.status;
       if (!Object.keys(patch).length) continue;
       await db.chatItem.update({ where: { id: k.id }, data: patch });

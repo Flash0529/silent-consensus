@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { areaName, middle, round } from "@/lib/places";
 import { findVenues, venueKindOf, type Venue } from "@/lib/findplaces";
 import { slotLabel, groupZone } from "@/lib/calendar";
+import { clip, clipOrNull } from "@/lib/text";
 
 // Private answers, public outcomes: the core promise of Silent Consensus.
 // - RSVPs on a plan card and answers to Hush's questions are stored per person but NEVER shown to the
@@ -38,7 +39,7 @@ export async function createAsk(
       circleId,
       itemId: opts.itemId ?? null,
       field: opts.field,
-      question: opts.question.slice(0, 200),
+      question: clip(opts.question, 200),
       options,
       meta: opts.meta ? (opts.meta as Prisma.InputJsonValue) : undefined,
     },

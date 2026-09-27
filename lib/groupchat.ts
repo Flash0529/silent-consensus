@@ -2,6 +2,7 @@ import type { Circle } from "@prisma/client";
 import { db } from "@/lib/db";
 import { groupInclude, toGroupSafe } from "@/lib/serialize";
 import { DISPARITY_THRESHOLD, dayKey, gate, judge, rulesPass, type GroupLine } from "@/lib/twilio/disparity";
+import { clip, clipOrNull } from "@/lib/text";
 
 // The in-app group chat: people message each other; Hush is a participant that stays quiet unless
 // it's asked ("Hush, …") or the rules + judge see a plan getting stuck. Then it checks in with
@@ -18,7 +19,7 @@ export function postToGroup(
   memberId: string | null = null,
   replyToId: string | null = null,
 ) {
-  return db.groupMessage.create({ data: { circleId, kind, body: body.slice(0, 2000), memberId, replyToId } });
+  return db.groupMessage.create({ data: { circleId, kind, body: clip(body, 2000), memberId, replyToId } });
 }
 
 export const hushSays = (circleId: string, body: string) => postToGroup(circleId, "HUSH", body);
@@ -127,7 +128,7 @@ export async function hushListens(circleId: string, authorMemberId: string, body
   // Go private right away: everyone gets asked in their Hush chat (the session posts the group line).
   const { autoPlan, startSession } = await import("@/lib/checkin");
   const item = await db.chatItem.findFirst({ where: { circleId, kind: "EVENT", status: "OPEN" }, orderBy: { createdAt: "desc" } });
-  const brief = lines.slice(-6).map((l) => l.body).join(" / ").slice(0, 300);
+  const brief = clip(lines.slice(-6).map((l) => l.body).join(" / "), 300);
   const reason = asked ? "Someone asked Hush to plan this" : "A plan in the chat seemed to be getting stuck";
   const id = asked ? await startSession(circleId, { itemId: item?.id ?? null, reason, brief }) : await autoPlan(circleId, item?.id ?? null, reason, brief);
   if (!id && asked) await hushSays(circleId, "I'm already working on a plan with everyone privately. Check your Hush chat!");
