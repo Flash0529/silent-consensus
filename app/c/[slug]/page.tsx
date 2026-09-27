@@ -188,7 +188,7 @@ export default function GroupPage({ params }: { params: Promise<{ slug: string }
           </>
         )}
 
-        {actionError && <p className="text-secondary text-red-700">{actionError}</p>}
+        {actionError && <p className="text-secondary text-danger">{actionError}</p>}
 
         <p className="flex items-center gap-2 text-secondary text-muted">
           <LockIcon size={15} stroke={2.4} />

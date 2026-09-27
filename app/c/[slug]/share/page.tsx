@@ -232,7 +232,7 @@ export default function SharePage({ params }: { params: Promise<{ slug: string }
               download={`${s.title}.ics`}
               className="flex h-row items-center justify-center gap-2 rounded-btn bg-hairline text-body font-medium"
             >
-              <CalendarIcon size={18} color="#0B0B0C" />
+              <CalendarIcon size={18} />
               Add to calendar
             </a>
             <button type="button" onClick={sharePlan} className="flex h-row items-center justify-center gap-2 rounded-btn bg-hairline text-body font-medium">
@@ -249,7 +249,7 @@ export default function SharePage({ params }: { params: Promise<{ slug: string }
           {s.paid ? (
             <>
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-ink">
-                <CheckIcon size={30} color="#FFFFFF" stroke={3} />
+                <CheckIcon size={30} stroke={3} className="text-on-ink" />
               </span>
               <h2 className="text-card-title">Paid {money(m.finalCents)}</h2>
               <p className="text-body text-muted">Demo payment. No real money moves.</p>

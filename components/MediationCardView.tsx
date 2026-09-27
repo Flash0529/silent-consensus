@@ -61,7 +61,7 @@ export function MediationCardView({ card, leakCheckPassed }: { card: MediationCa
         <li className="border-b border-divider px-4 py-2.5 text-secondary font-semibold">A way forward</li>
         {card.proposal.map((p, i) => (
           <li key={i} className={`flex gap-3 px-4 py-3 ${i < card.proposal.length - 1 ? "border-b border-divider" : ""}`}>
-            <span className="flex h-badge w-badge shrink-0 items-center justify-center rounded-badge bg-ink text-[14px] font-medium text-white">
+            <span className="flex h-badge w-badge shrink-0 items-center justify-center rounded-badge bg-ink text-[14px] font-medium text-on-ink">
               {i + 1}
             </span>
             <div className="flex flex-col gap-0.5">

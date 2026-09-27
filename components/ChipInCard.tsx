@@ -52,7 +52,7 @@ export function ChipInCard({ state, baseCents, onSubmit, busy }: Props) {
                 setAmount(c);
               }}
               className={`h-row rounded-btn text-body font-semibold disabled:opacity-35 ${
-                sel ? "bg-ink text-white" : "border border-hairline bg-surface"
+                sel ? "bg-ink text-on-ink" : "border border-hairline bg-surface"
               }`}
             >
               {money(c)}
@@ -65,7 +65,7 @@ export function ChipInCard({ state, baseCents, onSubmit, busy }: Props) {
           aria-checked={other}
           disabled={busy}
           onClick={() => setOther(true)}
-          className={`h-row rounded-btn text-body font-semibold ${other ? "bg-ink text-white" : "border border-hairline bg-surface"}`}
+          className={`h-row rounded-btn text-body font-semibold ${other ? "bg-ink text-on-ink" : "border border-hairline bg-surface"}`}
         >
           Other
         </button>
@@ -113,7 +113,7 @@ export function ChipInCard({ state, baseCents, onSubmit, busy }: Props) {
           type="button"
           disabled={busy || chosen <= 0}
           onClick={() => onSubmit(chosen)}
-          className="h-row rounded-btn bg-ink text-body font-medium text-white disabled:opacity-40"
+          className="h-row rounded-btn bg-ink text-body font-medium text-on-ink disabled:opacity-40"
         >
           {chosen > 0 ? `Chip in ${money(chosen)}` : "Chip in"}
         </button>
