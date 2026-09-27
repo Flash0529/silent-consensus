@@ -13,11 +13,11 @@ export function MemberStatusGrid({ members }: { members: M[] }) {
             <div className="relative h-[58px] w-[58px]">
               <Avatar m={m} size={58} ring="" className={done ? "" : "opacity-60"} />
               {done ? (
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 border-white bg-ink">
-                  <CheckIcon size={12} color="#FFFFFF" stroke={3.4} />
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 border-surface bg-ink">
+                  <CheckIcon size={12} stroke={3.4} className="text-on-ink" />
                 </span>
               ) : (
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 border-white bg-control">
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 border-surface bg-control">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted" />
                 </span>
               )}

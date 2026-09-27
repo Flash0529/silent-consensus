@@ -3,7 +3,7 @@ export function ScrollFade({ height = 100 }: { height?: number }) {
     <div
       aria-hidden="true"
       className="pointer-events-none absolute inset-x-0 top-0 z-10"
-      style={{ height, background: "linear-gradient(#FFFFFF 64%, rgba(255,255,255,0))" }}
+      style={{ height, background: "linear-gradient(rgb(var(--surface)) 64%, rgb(var(--surface) / 0))" }}
     />
   );
 }

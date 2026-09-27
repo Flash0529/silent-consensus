@@ -2,7 +2,7 @@ import { avatarStyle } from "@/lib/avatars";
 
 type M = { id: string; name: string; avatarColor: string };
 
-export function Avatar({ m, size = 28, ring = "#FFFFFF", className = "" }: { m: M; size?: number; ring?: string; className?: string }) {
+export function Avatar({ m, size = 28, ring = "rgb(var(--surface))", className = "" }: { m: M; size?: number; ring?: string; className?: string }) {
   const s = avatarStyle(m.avatarColor);
   return (
     <span
@@ -22,7 +22,7 @@ export function Avatar({ m, size = 28, ring = "#FFFFFF", className = "" }: { m: 
   );
 }
 
-export function AvatarStack({ members, size = 28, ring = "#FFFFFF", max = 5 }: { members: M[]; size?: number; ring?: string; max?: number }) {
+export function AvatarStack({ members, size = 28, ring = "rgb(var(--surface))", max = 5 }: { members: M[]; size?: number; ring?: string; max?: number }) {
   return (
     <div className="flex">
       {members.slice(0, max).map((m, i) => (

@@ -23,7 +23,7 @@ export function MemberBubble({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
       {...bubbleMotion}
-      className="max-w-[280px] self-end whitespace-pre-wrap rounded-bubble bg-ink px-[18px] py-[14px] text-body text-white"
+      className="max-w-[280px] self-end whitespace-pre-wrap rounded-bubble bg-ink px-[18px] py-[14px] text-body text-on-ink"
     >
       {children}
     </motion.div>

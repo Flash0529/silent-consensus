@@ -55,7 +55,7 @@ export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
           </FloatingIconButton>
           <span className="text-[18px] font-semibold">Quiet Consensus</span>
           <FloatingIconButton label="How your privacy works" onClick={() => setPrivacyOpen(true)}>
-            <LockIcon size={20} color="#0B0B0C" stroke={2.2} />
+            <LockIcon size={20} stroke={2.2} />
           </FloatingIconButton>
         </div>
 
@@ -71,7 +71,7 @@ export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
           </p>
           {circle.members.length > 0 && (
             <div className="flex items-center gap-[10px]">
-              <AvatarStack members={circle.members} size={32} ring="#F7F7F8" />
+              <AvatarStack members={circle.members} size={32} ring="rgb(var(--surface-2))" />
               <span className="text-secondary text-ink-2">{joinedLine(circle.members.map((m) => m.name))}</span>
             </div>
           )}
@@ -113,12 +113,12 @@ export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
               <button
                 type="submit"
                 disabled={!name.trim() || busy}
-                className="h-row rounded-btn bg-ink text-body font-medium text-white disabled:opacity-40"
+                className="h-row rounded-btn bg-ink text-body font-medium text-on-ink disabled:opacity-40"
               >
                 {busy ? "Joining…" : "Join"}
               </button>
             </div>
-            {error && <p className="mt-3 text-secondary text-red-700">{error}</p>}
+            {error && <p className="mt-3 text-secondary text-danger">{error}</p>}
           </>
         )}
         <p className="mt-[22px] text-secondary text-muted">
@@ -137,7 +137,7 @@ export function JoinSheet({ circle }: { circle: GroupSafeCircle }) {
             <li>Every group message is checked so no one's reasons show.</li>
             <li>No account. A cookie on this phone remembers you for this plan.</li>
           </ul>
-          <button type="button" onClick={() => setPrivacyOpen(false)} className="mt-2 h-row rounded-btn bg-ink text-body font-medium text-white">
+          <button type="button" onClick={() => setPrivacyOpen(false)} className="mt-2 h-row rounded-btn bg-ink text-body font-medium text-on-ink">
             Got it
           </button>
         </div>

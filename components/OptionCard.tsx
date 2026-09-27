@@ -40,7 +40,7 @@ export function OptionCard({ question, options, selected = null, disabled, onPic
             >
               <span
                 className={`flex h-badge w-badge shrink-0 items-center justify-center rounded-badge text-[14px] font-medium ${
-                  isSel ? "bg-ink text-white" : "bg-bubble text-muted"
+                  isSel ? "bg-ink text-on-ink" : "bg-bubble text-muted"
                 }`}
               >
                 {LETTERS[i]}

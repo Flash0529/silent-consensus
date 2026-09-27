@@ -74,3 +74,28 @@ export const MediationInterviewTurn = z.object({
   done: z.boolean().default(false),
 });
 export type MediationInterviewTurn = z.infer<typeof MediationInterviewTurn>;
+
+// Organizer setup chat (/new). The draft is everything known so far, carried forward each turn.
+const hhmm = z.string().regex(/^\d{2}:\d{2}$/);
+
+export const SetupDraft = z.object({
+  name: z.string().max(30).nullable().optional(),
+  kind: z.enum(["PLAN", "MEDIATE"]).nullable().optional(),
+  activity: z.string().max(40).nullable().optional(),
+  title: z.string().max(60).nullable().optional(),
+  topic: z.string().max(60).nullable().optional(),
+  area: z.string().max(60).nullable().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  startTime: hhmm.nullable().optional(),
+  endTime: hhmm.nullable().optional(),
+});
+export type SetupDraft = z.infer<typeof SetupDraft>;
+
+export const SetupTurn = z.object({
+  reply: z.string().min(1).max(400),
+  options: z.array(z.string().max(40)).max(5),
+  draft: SetupDraft,
+  ready: z.boolean(),
+  safety: z.enum(["none", "concern", "stop"]).default("none"),
+});
+export type SetupTurn = z.infer<typeof SetupTurn>;

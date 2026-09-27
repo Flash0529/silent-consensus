@@ -43,15 +43,15 @@ export function PlanningStepper({ stage, memberCount, venueCount, kind = "PLAN" 
             >
               {done ? (
                 <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-ink">
-                  <CheckIcon size={14} color="#FFFFFF" stroke={3} />
+                  <CheckIcon size={14} stroke={3} className="text-on-ink" />
                 </span>
               ) : active ? (
                 <svg width="26" height="26" viewBox="0 0 26 26" className="shrink-0 animate-spin" aria-hidden="true">
-                  <circle cx="13" cy="13" r="10" fill="none" stroke="#D1D1D6" strokeWidth="3" />
-                  <path d="M13 3a10 10 0 0 1 10 10" fill="none" stroke="#5B3DF5" strokeWidth="3" strokeLinecap="round" />
+                  <circle cx="13" cy="13" r="10" fill="none" strokeWidth="3" className="stroke-track" />
+                  <path d="M13 3a10 10 0 0 1 10 10" fill="none" strokeWidth="3" strokeLinecap="round" className="stroke-hush" />
                 </svg>
               ) : (
-                <span className="h-[26px] w-[26px] shrink-0 rounded-full border-2 border-[#D1D1D6]" />
+                <span className="h-[26px] w-[26px] shrink-0 rounded-full border-2 border-track" />
               )}
               {s.label}
             </li>

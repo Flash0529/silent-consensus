@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import Script from "next/script";
+import { ThemeProvider, themeBootScript } from "@/lib/theme";
 import "./globals.css";
 
 const geist = Geist({
@@ -17,14 +19,21 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#FFFFFF",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#111113" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={geist.variable}>
+    // data-theme is set before hydration by themeBootScript.
+    <html lang="en" className={geist.variable} suppressHydrationWarning>
       <body className="font-sans">
-        <div className="relative mx-auto min-h-dvh w-full max-w-app bg-surface">{children}</div>
+        <Script id="theme-boot" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <ThemeProvider>
+          <div className="relative mx-auto min-h-dvh w-full max-w-app bg-surface">{children}</div>
+        </ThemeProvider>
       </body>
     </html>
   );

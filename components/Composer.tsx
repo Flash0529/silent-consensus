@@ -59,7 +59,7 @@ export function Composer({ onSend, onMic, micActive, disabled, placeholder = "Te
             disabled={!hasText || disabled}
             className="absolute right-[6px] top-[6px] flex h-11 w-11 items-center justify-center rounded-full bg-ink disabled:bg-control"
           >
-            <SendIcon color={hasText ? "#FFFFFF" : "#6E6E73"} />
+            <SendIcon className={hasText ? "text-on-ink" : "text-muted"} />
           </button>
         ) : (
           <button
@@ -72,7 +72,7 @@ export function Composer({ onSend, onMic, micActive, disabled, placeholder = "Te
               micActive ? "bg-hush" : "bg-control"
             }`}
           >
-            <MicIcon color={micActive ? "#FFFFFF" : "#3A3A3C"} />
+            <MicIcon className={micActive ? "text-white" : "text-ink-2"} />
           </button>
         )}
       </div>

@@ -214,7 +214,13 @@ export async function callLLM<S extends z.ZodType>(args: CallArgs<S>): Promise<C
           jsonObjectOnly.add(p.id);
           out = await complete(p, args, messages);
         }
-        const parsed = args.schema.safeParse(parseJson(out.text));
+        let json: unknown;
+        try {
+          json = parseJson(out.text);
+        } catch {
+          json = undefined; // not JSON at all: fails validation below and gets the repair retry
+        }
+        const parsed = args.schema.safeParse(json);
         if (parsed.success) {
           const ms = Date.now() - t0;
           await trace(args, p.id, ms, true, {

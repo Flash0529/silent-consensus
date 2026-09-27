@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HushBubble, MemberBubble, TypingDots } from "@/components/HushBubble";
 import { OptionCard } from "@/components/OptionCard";
+import { ConfirmCard } from "@/components/ConfirmChips";
 import { Composer } from "@/components/Composer";
 import { FloatingHeader } from "@/components/ScrollFade";
 import { FloatingIconButton } from "@/components/FloatingIconButton";
@@ -11,151 +12,95 @@ import { BackIcon } from "@/components/Icons";
 import { InviteCard } from "@/components/InviteCard";
 import { PrimaryPill } from "@/components/PrimaryPill";
 import { api } from "@/lib/client";
-import { dateLabel, etDate, nextWeekday } from "@/lib/dates";
+import type { SetupDraft } from "@/lib/ai/schemas";
+import type { CirclePayload, SetupResult } from "@/lib/ai/setup";
 
-type Step = "name" | "mode" | "what" | "when" | "where" | "topic" | "checkin" | "creating" | "done";
 type Line = { from: "hush" | "me"; text: string };
 
-const MODES = ["Plan a hangout", "Work through a disagreement"];
-const TOPICS = ["The apartment", "The group trip", "Money stuff", "Something else"];
-const WHAT = ["Dinner", "Hangout", "Coffee or dessert", "Something active", "Something else"];
-const WHERE = ["Midtown Atlanta", "Near Georgia Tech", "Downtown Atlanta", "Decatur", "Somewhere else"];
-
-type When = { label: string; start: Date; end: Date; title: string };
-
-function whenOptions(): When[] {
-  const tomorrow = new Date(Date.now() + 86400000);
-  const at = (weekday: number, startH: number, endH: number, title: string): When => {
-    const { y, m, d } = nextWeekday(weekday, tomorrow);
-    const start = etDate(y, m, d, startH);
-    return {
-      label: `${dateLabel(start, "").replace(/ · $/, "")} · ${startH >= 17 ? "evening" : "afternoon"}`,
-      start,
-      end: etDate(y, m, d, endH),
-      title,
-    };
-  };
-  return [at(5, 18, 23, "Friday night"), at(6, 18, 23, "Saturday night"), at(0, 12, 17, "Sunday afternoon")];
-}
-
-function checkinOptions(): When[] {
-  return [3, 7, 14].map((days) => {
-    const t = new Date(Date.now() + days * 86400000);
-    const [y, m, d] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" })
-      .format(t)
-      .split("-")
-      .map(Number);
-    const start = etDate(y, m, d, 19);
-    return {
-      label: `${days === 3 ? "In 3 days" : days === 7 ? "In a week" : "In two weeks"} (${dateLabel(start, "")})`,
-      start,
-      end: etDate(y, m, d, 21),
-      title: "",
-    };
-  });
-}
+// The opening is fixed so it shows instantly and costs no model call.
+const OPENING: Line[] = [
+  { from: "hush", text: "Hi! I'm Hush. I'll check in with each friend privately, then plan something everyone can say yes to." },
+  { from: "hush", text: "First, what should I call you?" },
+];
+const CREATE = "Create the plan";
+const CHANGE = "Change something";
 
 export default function NewPlan() {
-  const [step, setStep] = useState<Step>("name");
-  const [lines, setLines] = useState<Line[]>([
-    { from: "hush", text: "Hi! I'm Hush. I'll check in with each friend privately, then plan something everyone can say yes to." },
-    { from: "hush", text: "First, what should I call you?" },
-  ]);
-  const [typing, setTyping] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [lines, setLines] = useState<Line[]>(OPENING);
+  const [options, setOptions] = useState<string[]>([]);
+  const [draft, setDraft] = useState<SetupDraft>({});
+  const [ready, setReady] = useState<{ circle: CirclePayload; summary: string[] } | null>(null);
+  const [thinking, setThinking] = useState(false);
+  const [trouble, setTrouble] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(null);
-  const data = useRef({ name: "", kind: "PLAN" as "PLAN" | "MEDIATE", activity: "", topic: "", when: null as When | null, area: "" });
-  const whens = useMemo(whenOptions, []);
-  const checkins = useMemo(checkinOptions, []);
+  const [title, setTitle] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
 
-  useEffect(() => bottom.current?.scrollIntoView({ behavior: "smooth" }), [lines, typing, step]);
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ behavior: "smooth" });
+  }, [lines, thinking, options, ready, trouble, slug]);
 
-  const hush = (text: string, next: Step) => {
-    setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      setLines((l) => [...l, { from: "hush", text }]);
-      setStep(next);
-    }, 450);
-  };
-  const me = (text: string) => setLines((l) => [...l, { from: "me", text }]);
-
-  const create = async () => {
-    setStep("creating");
-    setTyping(true);
-    const d = data.current;
+  const turn = async (history: Line[]) => {
+    setThinking(true);
+    setTrouble(null);
+    setOptions([]);
+    setReady(null);
     try {
-      const res = await api<{ slug: string }>("/api/circles", {
+      const res = await api<SetupResult>("/api/new/chat", {
         method: "POST",
         body: JSON.stringify({
-          organizerName: d.name,
-          kind: d.kind,
-          topic: d.kind === "MEDIATE" ? d.topic : undefined,
-          title: d.kind === "MEDIATE" ? d.topic : d.when!.title,
-          activity: d.kind === "MEDIATE" ? "conversation" : d.activity.toLowerCase(),
-          area: d.area,
-          windowStart: d.when!.start.toISOString(),
-          windowEnd: d.when!.end.toISOString(),
+          messages: history.map((l) => ({ role: l.from === "me" ? "user" : "assistant", content: l.text })),
+          draft,
         }),
       });
+      setLines((l) => [...l, { from: "hush", text: res.reply }]);
+      setDraft(res.draft);
+      setOptions(res.options);
+      if (res.ready && res.circle) setReady({ circle: res.circle, summary: res.summary });
+    } catch (e) {
+      setTrouble(e instanceof Error ? e.message : "I'm having trouble thinking right now. Try again in a moment.");
+    } finally {
+      setThinking(false);
+    }
+  };
+
+  const send = (text: string) => {
+    if (thinking) return;
+    if (ready && text === CREATE) return create(ready);
+    const next = [...lines, { from: "me" as const, text }];
+    setLines(next);
+    turn(next);
+  };
+
+  const create = async (confirmed: { circle: CirclePayload; summary: string[] }) => {
+    const { circle } = confirmed;
+    setLines((l) => [...l, { from: "me", text: CREATE }]);
+    setReady(null);
+    setThinking(true);
+    setTrouble(null);
+    try {
+      const res = await api<{ slug: string }>("/api/circles", { method: "POST", body: JSON.stringify(circle) });
+      setTitle(circle.title);
       setSlug(res.slug);
-      setTyping(false);
       setLines((l) => [
         ...l,
         {
           from: "hush",
           text:
-            d.kind === "MEDIATE"
-              ? `"${d.topic}" is set. Share this with everyone involved. I'll hear each side privately, including yours, and never quote anyone.`
-              : `"${d.when!.title}" is set. Share this with your friends. I'll talk to each of them privately, and you too.`,
+            circle.kind === "MEDIATE"
+              ? `"${circle.title}" is set. Share this with everyone involved. I'll hear each side privately, including yours, and never quote anyone.`
+              : `"${circle.title}" is set. Share this with your friends. I'll talk to each of them privately, and you too.`,
         },
       ]);
-      setStep("done");
     } catch (e) {
-      setTyping(false);
-      setError(e instanceof Error ? e.message : "Something went wrong");
-      setStep("where");
+      setTrouble(e instanceof Error ? e.message : "Something went wrong");
+      setReady(confirmed);
+    } finally {
+      setThinking(false);
     }
   };
 
-  const onText = (t: string) => {
-    if (step === "name") {
-      data.current.name = t.slice(0, 30);
-      me(t);
-      hush(`Nice to meet you, ${data.current.name}. What can I help with?`, "mode");
-    } else if (step === "what") pickWhat(t);
-    else if (step === "where") pickWhere(t);
-    else if (step === "topic") pickTopic(t);
-  };
-  const pickMode = (i: number) => {
-    me(MODES[i]);
-    if (i === 0) {
-      data.current.kind = "PLAN";
-      hush("What are we planning?", "what");
-    } else {
-      data.current.kind = "MEDIATE";
-      hush("What should we call it? Keep it neutral, so no one feels singled out.", "topic");
-    }
-  };
-  const pickTopic = (t: string) => {
-    if (t === "Something else") return hush("Type a short, neutral name.", "topic");
-    data.current.topic = t.slice(0, 60);
-    me(t);
-    hush("When should everyone have a way forward by?", "checkin");
-  };
-  const pickWhat = (t: string) => {
-    if (t === "Something else") return hush("Tell me in a few words.", "what");
-    data.current.activity = t;
-    me(t);
-    hush("When works?", "when");
-  };
-  const pickWhere = (t: string) => {
-    if (t === "Somewhere else") return hush("Which neighborhood or city?", "where");
-    data.current.area = t;
-    me(t);
-    create();
-  };
+  const lastIsMine = lines.at(-1)?.from === "me";
 
   return (
     <main className="relative flex h-dvh flex-col">
@@ -171,35 +116,27 @@ export default function NewPlan() {
         {lines.map((l, i) =>
           l.from === "hush" ? <HushBubble key={i}>{l.text}</HushBubble> : <MemberBubble key={i}>{l.text}</MemberBubble>,
         )}
-        {typing && <TypingDots />}
-        {!typing && step === "mode" && <OptionCard options={MODES} onPick={pickMode} />}
-        {!typing && step === "topic" && <OptionCard options={TOPICS} onPick={(i) => pickTopic(TOPICS[i])} />}
-        {!typing && step === "checkin" && (
-          <OptionCard
-            options={checkins.map((w) => w.label)}
-            onPick={(i) => {
-              data.current.when = checkins[i];
-              me(checkins[i].label);
-              create();
-            }}
-          />
-        )}
-        {!typing && step === "what" && <OptionCard options={WHAT} onPick={(i) => pickWhat(WHAT[i])} />}
-        {!typing && step === "when" && (
-          <OptionCard
-            options={whens.map((w) => w.label)}
-            onPick={(i) => {
-              data.current.when = whens[i];
-              me(whens[i].label);
-              hush("Which area?", "where");
-            }}
-          />
-        )}
-        {!typing && step === "where" && <OptionCard options={WHERE} onPick={(i) => pickWhere(WHERE[i])} />}
-        {error && <p className="self-center text-caption text-red-700">{error}</p>}
-        {step === "done" && slug && (
+        {thinking && <TypingDots />}
+        {!thinking && ready && (
           <>
-            <InviteCard slug={slug} title={data.current.kind === "MEDIATE" ? data.current.topic : data.current.when!.title} />
+            {ready.summary.length > 0 && <ConfirmCard lead="Here's what I'll set up:" chips={ready.summary} />}
+            <OptionCard options={[CREATE, CHANGE]} onPick={(i) => send(i === 0 ? CREATE : CHANGE)} />
+          </>
+        )}
+        {!thinking && !ready && !slug && options.length > 0 && <OptionCard options={options} onPick={(i) => send(options[i])} />}
+        {trouble && (
+          <div className="flex flex-col items-start gap-2">
+            <HushBubble>{trouble}</HushBubble>
+            {lastIsMine && (
+              <button type="button" onClick={() => turn(lines)} className="ml-2 text-secondary font-medium underline">
+                Try again
+              </button>
+            )}
+          </div>
+        )}
+        {slug && (
+          <>
+            <InviteCard slug={slug} title={title} />
             <div className="flex flex-col gap-3 pt-2">
               <PrimaryPill href={`/c/${slug}/chat`}>Start my private chat</PrimaryPill>
               <a href={`/c/${slug}`} className="py-2 text-center text-body font-medium text-muted">
@@ -211,11 +148,12 @@ export default function NewPlan() {
         <div ref={bottom} />
       </div>
 
-      {(step === "name" || step === "what" || step === "where" || step === "topic") && (
+      {!slug && (
         <Composer
-          onSend={onText}
+          onSend={send}
           showPlus={false}
-          placeholder={step === "name" ? "Your first name" : step === "topic" ? "Or type a name" : "Or type your own"}
+          disabled={thinking}
+          placeholder={lines.length <= OPENING.length ? "Your first name" : "Tell Hush anything"}
         />
       )}
     </main>

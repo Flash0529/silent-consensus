@@ -8,10 +8,12 @@ import { PrimaryPill } from "@/components/PrimaryPill";
 import { Sheet } from "@/components/Sheet";
 import { FloatingIconButton } from "@/components/FloatingIconButton";
 import { DotsIcon } from "@/components/Icons";
+import { SettingsSheet } from "@/components/SettingsSheet";
 
 export default function Welcome() {
   const router = useRouter();
   const [joinOpen, setJoinOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [code, setCode] = useState("");
 
   const go = (e: React.FormEvent) => {
@@ -24,13 +26,13 @@ export default function Welcome() {
   return (
     <main className="relative flex min-h-dvh flex-col items-center px-7 pb-[34px] pt-[116px]">
       <div className="absolute right-5 top-6">
-        <FloatingIconButton label="Presenter view" href="/demo">
+        <FloatingIconButton label="Settings" onClick={() => setSettingsOpen(true)}>
           <DotsIcon />
         </FloatingIconButton>
       </div>
       <h1 className="max-w-[300px] text-center text-title">Plans everyone can say yes to</h1>
       <div className="flex grow items-center justify-center py-6">
-        <HushMascot size={196} label="Hush, the Quiet Consensus planner" />
+        <HushMascot size={196} label="Hush, the Quiet Consensus planner" animated />
       </div>
       <div className="mb-9 flex flex-col items-center gap-[10px]">
         <p className="text-[26px] font-bold tracking-[-0.01em]">Hush</p>
@@ -71,7 +73,7 @@ export default function Welcome() {
             >
               Cancel
             </button>
-            <button type="submit" className="h-row rounded-btn bg-ink text-body font-medium text-white">
+            <button type="submit" className="h-row rounded-btn bg-ink text-body font-medium text-on-ink">
               Join
             </button>
           </div>
@@ -80,6 +82,8 @@ export default function Welcome() {
           </Link>
         </form>
       </Sheet>
+
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
   );
 }

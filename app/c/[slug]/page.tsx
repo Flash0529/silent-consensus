@@ -196,7 +196,7 @@ export default function GroupPage({ params }: { params: Promise<{ slug: string }
         </p>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-app flex-col gap-2 bg-gradient-to-t from-white via-white to-white/0 px-[22px] pb-[max(34px,env(safe-area-inset-bottom))] pt-6">
+      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-app flex-col gap-2 bg-gradient-to-t from-surface via-surface to-surface/0 px-[22px] pb-[max(34px,env(safe-area-inset-bottom))] pt-6">
         {isOrganizer && status === "COLLECTING" && done >= 2 && !allDone && (
           <button
             type="button"

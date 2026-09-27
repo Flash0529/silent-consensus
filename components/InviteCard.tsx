@@ -6,7 +6,9 @@ import { CopyIcon, ShareIcon } from "./Icons";
 export function InviteCard({ slug, title }: { slug: string; title: string }) {
   const [link, setLink] = useState(`/j/${slug}`);
   const [copied, setCopied] = useState(false);
-  useEffect(() => setLink(`${window.location.origin}/j/${slug}`), [slug]);
+  useEffect(() => {
+    setLink(`${window.location.origin}/j/${slug}`);
+  }, [slug]);
 
   const copy = async () => {
     try {
@@ -46,8 +48,8 @@ export function InviteCard({ slug, title }: { slug: string; title: string }) {
           <CopyIcon size={18} />
           {copied ? "Copied" : "Copy link"}
         </button>
-        <button type="button" onClick={share} className="flex h-row items-center justify-center gap-2 rounded-btn bg-ink text-body font-medium text-white">
-          <ShareIcon size={18} color="#FFFFFF" />
+        <button type="button" onClick={share} className="flex h-row items-center justify-center gap-2 rounded-btn bg-ink text-body font-medium text-on-ink">
+          <ShareIcon size={18} />
           Share
         </button>
       </div>
