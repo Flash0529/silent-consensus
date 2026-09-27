@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import { ThemeProvider, themeBootScript } from "@/lib/theme";
+import { StaleReload } from "@/components/StaleReload";
 import "./globals.css";
 
 // Inter substitutes for Galaxy Sans (the home page's style reference, docs/HANDOFF.md §5).
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="font-sans">
         <Script id="theme-boot" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <StaleReload />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

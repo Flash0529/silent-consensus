@@ -18,6 +18,7 @@ import { CalendarIcon, DotsIcon } from "@/components/Icons";
 import { bgStyle } from "@/lib/chatLook";
 import { applyReaction, ReactionBar, ReactionChips, type Reaction } from "@/components/Reactions";
 import { Verified } from "@/components/Verified";
+import { coarsePointer, useArmed } from "@/components/useArmed";
 
 // The group chat: the main screen of a plan. People message each other here; Hush posts in it too.
 // Full window on desktop, phone-sized on phones.
@@ -29,7 +30,7 @@ type Msg = {
   id: string;
   kind: "TEXT" | "HUSH" | "EVENT" | "PLAN" | "ITEM" | "ASK" | "CHECKIN" | "FILE";
   file?: { id: string; name: string; mime: string; size: number; url: string; aiVisible: boolean; needsAnswer: boolean; expiresAt: string } | null;
-  checkIn?: { id: string; title: string | null; status: string; stage: string; startedAt: string; done: number; total: number; mine: string | null } | null;
+  checkIn?: { id: string; title: string | null; status: string; stage: string; deletedBy?: string | null; startedAt: string; done: number; total: number; mine: string | null } | null;
   ask?: {
     id: string;
     field?: string;
@@ -82,10 +83,15 @@ export default function GroupChatPage({ params }: { params: Promise<{ slug: stri
   // Press and hold a message: the focused preview with tapbacks and actions.
   const [focus, setFocusState] = useState<Msg | null>(null);
   const focusAt = useRef(0);
-  const setFocus = useCallback((m: Msg | null) => {
-    focusAt.current = Date.now();
-    setFocusState(m);
-  }, []);
+  const { armed, open: armFocus } = useArmed();
+  const setFocus = useCallback(
+    (m: Msg | null, viaTouch = false) => {
+      focusAt.current = Date.now();
+      if (m) armFocus(viaTouch);
+      setFocusState(m);
+    },
+    [armFocus],
+  );
   const [flash, setFlash] = useState<string | null>(null);
   const [pending, setPending] = useState<Msg[]>([]);
   const [sendError, setSendError] = useState("");
@@ -518,9 +524,9 @@ export default function GroupChatPage({ params }: { params: Promise<{ slug: stri
                   onReply={() => openThread(rootOf(m.id), m)}
                   onOpenThread={() => openThread(rootOf(m.id), messages.find((x) => x.id === rootOf(m.id)) ?? m)}
                   replies={replyCount.get(m.id) ?? 0}
-                  onFocus={() => {
+                  onFocus={(viaTouch) => {
                     setSelected(null);
-                    setFocus(m);
+                    setFocus(m, viaTouch);
                   }}
                   onReact={(e) => react(m, e)}
                   hushName={circle?.hush?.botName}
@@ -686,7 +692,7 @@ export default function GroupChatPage({ params }: { params: Promise<{ slug: stri
                   }}
                   onOpenThread={() => {}}
                   replies={0}
-                  onFocus={() => setFocus(m)}
+                  onFocus={(viaTouch) => setFocus(m, viaTouch)}
                   onReact={(e) => react(m, e)}
                   threadRootId={thread.rootId}
                 />
@@ -769,9 +775,10 @@ export default function GroupChatPage({ params }: { params: Promise<{ slug: stri
       {focus && (
         <div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/30 px-4 backdrop-blur-md"
+          style={{ pointerEvents: armed ? "auto" : "none" }}
           onClick={() => {
             // Lifting the finger after a long press can arrive as a tap: don't let it close the preview.
-            if (Date.now() - focusAt.current > 450) setFocus(null);
+            if (armed && Date.now() - focusAt.current > 450) setFocus(null);
           }}
           onContextMenu={(e) => {
             e.preventDefault();
@@ -906,7 +913,7 @@ function Row({
   onReply: () => void;
   onOpenThread: () => void;
   replies: number;
-  onFocus: () => void;
+  onFocus: (viaTouch?: boolean) => void;
   onReact: (emoji: string) => void;
   /** Set when shown inside a thread (no "N replies" link, no quote of the thread's first message). */
   threadRootId?: string;
@@ -933,7 +940,7 @@ function Row({
           hold.current = setTimeout(() => {
             held.current = true;
             navigator.vibrate?.(8);
-            onFocus();
+            onFocus(true);
           }, 450);
         },
         onTouchMove: cancelHold,
@@ -944,7 +951,9 @@ function Row({
         onContextMenu: (e: React.MouseEvent) => {
           e.preventDefault();
           e.stopPropagation();
-          onFocus();
+          // Android fires this on a long press too: already open from the hold timer.
+          if (held.current) return;
+          onFocus(coarsePointer());
         },
       };
   const extras = (alignEnd: boolean) => (
@@ -1086,7 +1095,7 @@ function Row({
             <span className="hidden shrink-0 items-center opacity-0 transition focus-within:opacity-100 group-hover:opacity-100 md:flex">
               <button
                 type="button"
-                onClick={onFocus}
+                onClick={() => onFocus(false)}
                 aria-label="React"
                 title="React"
                 className="rounded-full px-1.5 py-1 text-[15px] grayscale hover:bg-bubble hover:grayscale-0"
@@ -1158,6 +1167,15 @@ function PlanPost({ body }: { body: string }) {
 /** Hush planning privately with everyone: progress only, and a way into your Hush chat. */
 function CheckInCard({ slug, c }: { slug: string; c: NonNullable<Msg["checkIn"]> }) {
   const open = c.status === "OPEN";
+  if (c.stage === "CANCELLED")
+    return (
+      <div className="w-full max-w-[420px] rounded-[20px] border border-hairline bg-bubble p-4 opacity-80">
+        <p className="text-caption font-semibold uppercase tracking-wide text-muted">Plan deleted</p>
+        <p className="mt-1 text-body">
+          {c.deletedBy ?? "Someone"} deleted the plan{c.title ? ` “${c.title}”` : ""}.
+        </p>
+      </div>
+    );
   const [note, setNote] = useState("");
   const stale = open && Date.now() - +new Date(c.startedAt) > 20 * 60_000 && c.done < c.total;
   const stageLine = !open

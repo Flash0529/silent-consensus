@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import useSWR, { mutate as globalMutate } from "swr";
 import { Avatar } from "@/components/AvatarStack";
 import { HushMascot } from "@/components/HushMascot";
 import { Verified } from "@/components/Verified";
+import { coarsePointer, useArmed } from "@/components/useArmed";
 import { api, fetcher } from "@/lib/client";
 import type { ChatSummary } from "@/lib/useAccount";
 
@@ -15,6 +16,7 @@ import type { ChatSummary } from "@/lib/useAccount";
 // Press and hold (right-click on a computer): a preview of the latest messages, plus Delete.
 export function ChatRow({ c, active = false }: { c: ChatSummary; active?: boolean }) {
   const [peek, setPeek] = useState(false);
+  const [peekTouch, setPeekTouch] = useState(false);
   const hold = useRef<ReturnType<typeof setTimeout> | null>(null);
   const held = useRef(false);
   const cancel = () => {
@@ -28,6 +30,7 @@ export function ChatRow({ c, active = false }: { c: ChatSummary; active?: boolea
       hold.current = setTimeout(() => {
         held.current = true;
         navigator.vibrate?.(8);
+        setPeekTouch(true);
         setPeek(true);
       }, 450);
     },
@@ -38,6 +41,8 @@ export function ChatRow({ c, active = false }: { c: ChatSummary; active?: boolea
     },
     onContextMenu: (e: React.MouseEvent) => {
       e.preventDefault();
+      if (held.current) return; // Android long press: the hold timer already opened it
+      setPeekTouch(coarsePointer());
       setPeek(true);
     },
     onClick: (e: React.MouseEvent) => {
@@ -51,7 +56,7 @@ export function ChatRow({ c, active = false }: { c: ChatSummary; active?: boolea
   return (
     <>
       <ChatRowLink c={c} active={active} handlers={handlers} onDelete={() => setPeek(true)} />
-      {peek && typeof document !== "undefined" && createPortal(<ChatPeek c={c} active={active} onClose={() => setPeek(false)} />, document.body)}
+      {peek && typeof document !== "undefined" && createPortal(<ChatPeek c={c} active={active} viaTouch={peekTouch} onClose={() => setPeek(false)} />, document.body)}
     </>
   );
 }
@@ -169,7 +174,9 @@ type PeekMsg = {
 };
 
 /** The press-and-hold preview: the last few messages and what you can do with the chat. */
-function ChatPeek({ c, active, onClose }: { c: ChatSummary; active: boolean; onClose: () => void }) {
+function ChatPeek({ c, active, viaTouch, onClose }: { c: ChatSummary; active: boolean; viaTouch: boolean; onClose: () => void }) {
+  const { armed, open } = useArmed();
+  useEffect(() => open(viaTouch), [open, viaTouch]);
   const router = useRouter();
   const { data } = useSWR<{ messages: PeekMsg[] }>(`/api/circles/${c.slug}/messages?limit=8`, fetcher);
   const [confirm, setConfirm] = useState<null | "me" | "everyone" | "leave">(null);
@@ -202,9 +209,10 @@ function ChatPeek({ c, active, onClose }: { c: ChatSummary; active: boolean; onC
   return (
     <div
       className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/30 px-4 backdrop-blur-md"
+      style={{ pointerEvents: armed ? "auto" : "none" }}
       onClick={() => {
         // Lifting the finger after the long press can arrive as a tap: don't let it close the preview.
-        if (Date.now() - openedAt > 450) onClose();
+        if (armed && Date.now() - openedAt > 450) onClose();
       }}
       onContextMenu={(e) => {
         e.preventDefault();

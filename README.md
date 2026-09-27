@@ -206,7 +206,7 @@ npx next build    # type-check + production build
 Self-hosted on a Raspberry Pi 5:
 - **Service:** the systemd service `quiet-consensus-app` runs `next start` on :3020.
 - **Proxy:** Nginx Proxy Manager, host 14, behind Cloudflare.
-- **Deploy:** `npx next build`, then `sudo systemctl restart quiet-consensus-app`.
+- **Deploy:** `./scripts/deploy.sh`. It builds with a fresh deployment id (so open tabs reload instead of breaking) and keeps the previous build's files for a few days, then restarts the service.
 - **Keys:** added through the private *keydrop* page on the owner's homelab; never pasted into chats or committed.
 
 ## Libraries used
