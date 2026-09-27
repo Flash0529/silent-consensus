@@ -1,4 +1,4 @@
-# Quiet Consensus: build plan
+# Hush: build plan
 
 > Plans everyone can say yes to.
 
@@ -572,7 +572,7 @@ After each milestone I will run `npm run build` and `npm test`, commit, and send
 | 0:20–0:45 | Omar starts "Saturday night" and 4 phones scan the QR code. | `/new` → QR → presenter view fills with 4 joins |
 | 0:45–1:30 | Private chats run side by side. Maya taps **A · Under $15** and types her line. Jordan sends a voice note ("step-free… free after six") that turns into chips. Priya's chat gets filled by the simulator. | Presenter view, trace panel ticking |
 | 1:30–2:05 | "Hush is planning" stepper and the trace: `4 private chats read → 20 → 9 venues → 2 candidates → shortfall $10 → Leak check: pass`. Plan card reveal. Point at "Why this works" and the checked line: "No one had to say it." | Group view + trace |
-| 2:05–2:30 | Priya taps **Chip in $5** (Omar already has), so the pool reads $10 of $10. Maya's share shows **$15**. Everyone taps **A · I'm in**. Close: "Quiet Consensus. Plans everyone can say yes to." | Priya → Maya share → group |
+| 2:05–2:30 | Priya taps **Chip in $5** (Omar already has), so the pool reads $10 of $10. Maya's share shows **$15**. Everyone taps **A · I'm in**. Close: "Hush. Plans everyone can say yes to." | Priya → Maya share → group |
 
 ---
 

@@ -143,9 +143,9 @@ export default function SharePage({ params }: { params: Promise<{ slug: string }
     const body = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Quiet Consensus//EN",
+      "PRODID:-//Hush//EN",
       "BEGIN:VEVENT",
-      `UID:${slug}-${now}@quietconsensus`,
+      `UID:${slug}-${now}@hush`,
       `DTSTAMP:${now}`,
       `SUMMARY:${s.title}`,
       `DESCRIPTION:${s.dateLabel}`,

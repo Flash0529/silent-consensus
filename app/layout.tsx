@@ -11,7 +11,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Quiet Consensus",
+  title: "Hush",
   description: "Plans everyone can say yes to.",
 };
 

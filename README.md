@@ -1,8 +1,8 @@
-# Quiet Consensus
+# Hush
 
 **Plans everyone can say yes to.**
 
-Quiet Consensus is a web app where an AI planner named **Hush** privately asks each friend what they can't say in the group chat, such as budget, food, drinks, getting around, and timing. Hush then proposes one plan everyone can accept and explains it without revealing anyone's reasons. It also quietly balances the cost with an anonymous chip-in.
+**Hush** is a web app with an AI planner that privately asks each friend what they can't say in the group chat, such as budget, food, drinks, getting around, and timing. Hush then proposes one plan everyone can accept and explains it without revealing anyone's reasons. It also quietly balances the cost with an anonymous chip-in.
 
 The same idea works for harder conversations. In **mediation mode**, Hush hears each person's side of a disagreement privately. It then proposes a fair way forward without quoting anyone or revealing what they kept private.
 
@@ -19,7 +19,7 @@ Group chats plan for the loudest person. People with a quiet limit (money above 
 - Loneliness affects 1 in 6 people worldwide and is linked to more than 871,000 deaths a year ([WHO, June 2025](https://who.int/news/item/30-06-2025-social-connection-linked-to-improved-heath-and-reduced-risk-of-early-death)).
 - 12% of Americans reported no close friends in 2021, up from 3% in 1990 ([Survey Center on American Life](https://www.americansurveycenter.org/research/the-state-of-american-friendship-change-challenges-and-loss/)).
 
-Quiet Consensus lets people stay in without explaining themselves.
+Hush lets people stay in without explaining themselves.
 
 ## How it works
 

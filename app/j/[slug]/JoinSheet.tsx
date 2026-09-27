@@ -53,7 +53,7 @@ export function JoinSheet({ circle, rememberedName }: { circle: GroupSafeCircle;
           <FloatingIconButton label="Close" href="/">
             <CloseIcon />
           </FloatingIconButton>
-          <span className="text-[18px] font-semibold">Quiet Consensus</span>
+          <span className="text-[18px] font-semibold">Hush</span>
           <FloatingIconButton label="How your privacy works" onClick={() => setPrivacyOpen(true)}>
             <LockIcon size={20} stroke={2.2} />
           </FloatingIconButton>

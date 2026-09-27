@@ -32,7 +32,7 @@ export default function Welcome() {
       </div>
       <h1 className="max-w-[300px] text-center text-title">Plans everyone can say yes to</h1>
       <div className="flex grow items-center justify-center py-6">
-        <HushMascot size={196} label="Hush, the Quiet Consensus planner" animated />
+        <HushMascot size={196} label="Hush, the planner that checks in with each friend privately" animated />
       </div>
       <div className="mb-9 flex flex-col items-center gap-[10px]">
         <p className="text-[26px] font-bold tracking-[-0.01em]">Hush</p>

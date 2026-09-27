@@ -53,7 +53,7 @@ function providers(): Provider[] {
             apiKey: process.env.OPENROUTER_API_KEY,
             baseURL: process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1",
             maxRetries: 0,
-            defaultHeaders: { "X-Title": "Quiet Consensus", "HTTP-Referer": process.env.APP_URL ?? "http://localhost:3000" },
+            defaultHeaders: { "X-Title": "Hush", "HTTP-Referer": process.env.APP_URL ?? "http://localhost:3000" },
           }),
           // Jev's router chooses reasoning effort itself.
           supportsReasoningEffort: false,

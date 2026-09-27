@@ -135,7 +135,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
               <li>Every group message is checked so no one's reasons show.</li>
               <li>No account. A cookie on this device remembers you for each plan you join.</li>
             </ul>
-            <p className="text-caption text-muted">Quiet Consensus v{version}</p>
+            <p className="text-caption text-muted">Hush v{version}</p>
           </div>
         )}
 

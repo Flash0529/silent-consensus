@@ -22,7 +22,7 @@ export function InviteCard({ slug, title }: { slug: string; title: string }) {
   const share = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title, text: `Join "${title}" on Quiet Consensus`, url: link });
+        await navigator.share({ title, text: `Join "${title}" on Hush`, url: link });
       } catch {
         /* dismissed */
       }
