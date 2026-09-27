@@ -91,6 +91,7 @@ model Circle {
   status        CircleStatus  @default(COLLECTING)
   planningStage PlanningStage @default(NONE)
   replanCount   Int           @default(0)
+  foundCount    Int?
   organizerId   String?       @unique
   isDemo        Boolean       @default(false)
   createdAt     DateTime      @default(now())

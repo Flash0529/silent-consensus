@@ -12,6 +12,8 @@ type CircleIn = {
   windowStart: Date;
   status: string;
   planningStage: string;
+  foundCount?: number | null;
+  replanCount?: number;
   organizerId: string | null;
   members: {
     id: string;
@@ -73,6 +75,8 @@ export function toGroupSafe(circle: CircleIn) {
     dateLabel: dateLabel(circle.windowStart, circle.area),
     status: circle.status,
     planningStage: circle.planningStage,
+    foundCount: circle.foundCount ?? null,
+    canReplan: (circle.replanCount ?? 0) < 1,
     members: circle.members.map((m) => ({
       id: m.id,
       name: m.name,

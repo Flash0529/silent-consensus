@@ -1,0 +1,710 @@
+[
+ {
+  "id": "v01",
+  "label": "Picnic on the park lawn",
+  "name": "Park lawn (demo)",
+  "kind": "park",
+  "area": "Midtown Atlanta",
+  "lat": 33.7851,
+  "lng": -84.3738,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "none",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "quiet",
+  "outdoor": true,
+  "hours": {
+   "open": "06:00",
+   "close": "23:00"
+  },
+  "items": [
+   {
+    "label": "Picnic supplies",
+    "cents": 400
+   }
+  ],
+  "note": "Paved, step-free paths",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v02",
+  "label": "Food truck row",
+  "name": "Food truck row (demo)",
+  "kind": "food_trucks",
+  "area": "Midtown Atlanta",
+  "lat": 33.7866,
+  "lng": -84.3742,
+  "servesMeal": true,
+  "diets": [
+   "halal",
+   "vegetarian",
+   "vegan"
+  ],
+  "alcoholFocus": "none",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": true,
+  "hours": {
+   "open": "11:00",
+   "close": "22:30"
+  },
+  "items": [
+   {
+    "label": "Food truck dinner",
+    "cents": 1600
+   },
+   {
+    "label": "Dessert",
+    "cents": 500
+   }
+  ],
+  "note": "Halal, veggie and dessert trucks",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v03",
+  "label": "Walk to the fountain",
+  "name": "Park fountain (demo)",
+  "kind": "park",
+  "area": "Midtown Atlanta",
+  "lat": 33.7859,
+  "lng": -84.3721,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "none",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "quiet",
+  "outdoor": true,
+  "hours": {
+   "open": "06:00",
+   "close": "23:00"
+  },
+  "items": [],
+  "note": "Flat, five-minute stroll",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v04",
+  "label": "Rooftop taproom",
+  "name": "Rooftop taproom (demo)",
+  "kind": "bar",
+  "area": "Midtown Atlanta",
+  "lat": 33.7812,
+  "lng": -84.386,
+  "servesMeal": true,
+  "diets": [
+   "vegetarian"
+  ],
+  "alcoholFocus": "bar",
+  "stepFreeEntry": false,
+  "accessibleRestroom": false,
+  "noise": "loud",
+  "outdoor": true,
+  "hours": {
+   "open": "16:00",
+   "close": "02:00"
+  },
+  "items": [
+   {
+    "label": "Drinks and bites",
+    "cents": 3000
+   }
+  ],
+  "note": "Rooftop views",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v05",
+  "label": "Wine bar",
+  "name": "Wine bar (demo)",
+  "kind": "bar",
+  "area": "Midtown Atlanta",
+  "lat": 33.779,
+  "lng": -84.3845,
+  "servesMeal": true,
+  "diets": [
+   "vegetarian"
+  ],
+  "alcoholFocus": "bar",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "17:00",
+   "close": "01:00"
+  },
+  "items": [
+   {
+    "label": "Small plates",
+    "cents": 3500
+   }
+  ],
+  "note": "Cozy booths",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v06",
+  "label": "Brick oven pizza",
+  "name": "Brick oven pizza (demo)",
+  "kind": "restaurant",
+  "area": "Midtown Atlanta",
+  "lat": 33.777,
+  "lng": -84.389,
+  "servesMeal": true,
+  "diets": [
+   "vegetarian"
+  ],
+  "alcoholFocus": "optional",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "11:00",
+   "close": "23:00"
+  },
+  "items": [
+   {
+    "label": "Pizza dinner",
+    "cents": 2200
+   }
+  ],
+  "note": "Big shared tables",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v07",
+  "label": "Mediterranean grill",
+  "name": "Mediterranean grill (demo)",
+  "kind": "restaurant",
+  "area": "Midtown Atlanta",
+  "lat": 33.7801,
+  "lng": -84.388,
+  "servesMeal": true,
+  "diets": [
+   "halal",
+   "vegetarian",
+   "vegan"
+  ],
+  "alcoholFocus": "none",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "11:00",
+   "close": "22:00"
+  },
+  "items": [
+   {
+    "label": "Grill dinner",
+    "cents": 1800
+   },
+   {
+    "label": "Baklava",
+    "cents": 500
+   }
+  ],
+  "note": "Halal and veggie plates",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v08",
+  "label": "Karaoke room",
+  "name": "Basement karaoke (demo)",
+  "kind": "activity",
+  "area": "Midtown Atlanta",
+  "lat": 33.7815,
+  "lng": -84.3899,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "optional",
+  "stepFreeEntry": false,
+  "accessibleRestroom": false,
+  "noise": "loud",
+  "outdoor": false,
+  "hours": {
+   "open": "18:00",
+   "close": "02:00"
+  },
+  "items": [
+   {
+    "label": "Room share",
+    "cents": 2000
+   }
+  ],
+  "note": "Private rooms",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v09",
+  "label": "Upstairs noodle bar",
+  "name": "Upstairs noodle bar (demo)",
+  "kind": "restaurant",
+  "area": "Midtown Atlanta",
+  "lat": 33.776,
+  "lng": -84.3912,
+  "servesMeal": true,
+  "diets": [
+   "vegetarian"
+  ],
+  "alcoholFocus": "optional",
+  "stepFreeEntry": false,
+  "accessibleRestroom": false,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "11:00",
+   "close": "22:00"
+  },
+  "items": [
+   {
+    "label": "Noodle dinner",
+    "cents": 1600
+   }
+  ],
+  "note": "Counter seating",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v10",
+  "label": "Tech Square food hall",
+  "name": "Food hall (demo)",
+  "kind": "food_hall",
+  "area": "Near Georgia Tech",
+  "lat": 33.7766,
+  "lng": -84.3893,
+  "servesMeal": true,
+  "diets": [
+   "halal",
+   "vegetarian",
+   "vegan"
+  ],
+  "alcoholFocus": "optional",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "11:00",
+   "close": "22:00"
+  },
+  "items": [
+   {
+    "label": "Food hall dinner",
+    "cents": 1700
+   }
+  ],
+  "note": "Lots of stalls, one table",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v11",
+  "label": "Board game caf\u00e9",
+  "name": "Board game caf\u00e9 (demo)",
+  "kind": "activity",
+  "area": "Midtown Atlanta",
+  "lat": 33.7795,
+  "lng": -84.383,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "none",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "quiet",
+  "outdoor": false,
+  "hours": {
+   "open": "10:00",
+   "close": "18:00"
+  },
+  "items": [
+   {
+    "label": "Game table",
+    "cents": 800
+   },
+   {
+    "label": "Snacks",
+    "cents": 700
+   }
+  ],
+  "note": "Hundreds of games",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v12",
+  "label": "Steakhouse dinner",
+  "name": "Steakhouse (demo)",
+  "kind": "restaurant",
+  "area": "Midtown Atlanta",
+  "lat": 33.784,
+  "lng": -84.3835,
+  "servesMeal": true,
+  "diets": [],
+  "alcoholFocus": "optional",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "17:00",
+   "close": "23:00"
+  },
+  "items": [
+   {
+    "label": "Steak dinner",
+    "cents": 5500
+   }
+  ],
+  "note": "White tablecloth",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v13",
+  "label": "Late-night diner",
+  "name": "Late-night diner (demo)",
+  "kind": "restaurant",
+  "area": "Midtown Atlanta",
+  "lat": 33.775,
+  "lng": -84.3875,
+  "servesMeal": true,
+  "diets": [
+   "vegetarian"
+  ],
+  "alcoholFocus": "none",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "00:00",
+   "close": "23:59"
+  },
+  "items": [
+   {
+    "label": "Diner dinner",
+    "cents": 1500
+   }
+  ],
+  "note": "Booths and milkshakes",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v14",
+  "label": "Garden night walk",
+  "name": "Garden night walk (demo)",
+  "kind": "activity",
+  "area": "Midtown Atlanta",
+  "lat": 33.79,
+  "lng": -84.373,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "none",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "quiet",
+  "outdoor": true,
+  "hours": {
+   "open": "17:00",
+   "close": "22:00"
+  },
+  "items": [
+   {
+    "label": "Garden ticket",
+    "cents": 2500
+   }
+  ],
+  "note": "Lit, paved paths",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v15",
+  "label": "Movie on 10th",
+  "name": "Cinema (demo)",
+  "kind": "activity",
+  "area": "Midtown Atlanta",
+  "lat": 33.7815,
+  "lng": -84.387,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "optional",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "quiet",
+  "outdoor": false,
+  "hours": {
+   "open": "12:00",
+   "close": "23:59"
+  },
+  "items": [
+   {
+    "label": "Movie ticket",
+    "cents": 1400
+   }
+  ],
+  "note": "Reserved seats",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v16",
+  "label": "Sports bar",
+  "name": "Sports bar & grill (demo)",
+  "kind": "bar",
+  "area": "Midtown Atlanta",
+  "lat": 33.778,
+  "lng": -84.39,
+  "servesMeal": true,
+  "diets": [
+   "vegetarian"
+  ],
+  "alcoholFocus": "bar",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "loud",
+  "outdoor": false,
+  "hours": {
+   "open": "11:00",
+   "close": "02:00"
+  },
+  "items": [
+   {
+    "label": "Wings and drinks",
+    "cents": 2800
+   }
+  ],
+  "note": "Big screens",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v17",
+  "label": "Tea house",
+  "name": "Tea house (demo)",
+  "kind": "cafe",
+  "area": "Midtown Atlanta",
+  "lat": 33.7825,
+  "lng": -84.3815,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "none",
+  "stepFreeEntry": false,
+  "accessibleRestroom": false,
+  "noise": "quiet",
+  "outdoor": false,
+  "hours": {
+   "open": "09:00",
+   "close": "21:00"
+  },
+  "items": [
+   {
+    "label": "Tea and a snack",
+    "cents": 800
+   }
+  ],
+  "note": "Quiet corners",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v18",
+  "label": "Bowling night",
+  "name": "Bowling lanes (demo)",
+  "kind": "activity",
+  "area": "Midtown Atlanta",
+  "lat": 33.7735,
+  "lng": -84.395,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "optional",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "loud",
+  "outdoor": false,
+  "hours": {
+   "open": "12:00",
+   "close": "23:59"
+  },
+  "items": [
+   {
+    "label": "Two games and shoes",
+    "cents": 2000
+   }
+  ],
+  "note": "Bumpers on request",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v19",
+  "label": "Halal cart corner",
+  "name": "Halal cart corner (demo)",
+  "kind": "food_trucks",
+  "area": "Midtown Atlanta",
+  "lat": 33.7757,
+  "lng": -84.388,
+  "servesMeal": true,
+  "diets": [
+   "halal",
+   "vegetarian",
+   "vegan"
+  ],
+  "alcoholFocus": "none",
+  "stepFreeEntry": true,
+  "accessibleRestroom": false,
+  "noise": "moderate",
+  "outdoor": true,
+  "hours": {
+   "open": "11:00",
+   "close": "23:00"
+  },
+  "items": [
+   {
+    "label": "Cart platter",
+    "cents": 1100
+   }
+  ],
+  "note": "Quick platters",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v20",
+  "label": "Cocktail lounge",
+  "name": "Cocktail lounge (demo)",
+  "kind": "bar",
+  "area": "Midtown Atlanta",
+  "lat": 33.7845,
+  "lng": -84.385,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "bar",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "17:00",
+   "close": "02:00"
+  },
+  "items": [
+   {
+    "label": "Two cocktails",
+    "cents": 3200
+   }
+  ],
+  "note": "Low lighting",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v21",
+  "label": "Ice cream parlor",
+  "name": "Ice cream parlor (demo)",
+  "kind": "dessert",
+  "area": "Midtown Atlanta",
+  "lat": 33.7792,
+  "lng": -84.3862,
+  "servesMeal": false,
+  "diets": [],
+  "alcoholFocus": "none",
+  "stepFreeEntry": false,
+  "accessibleRestroom": false,
+  "noise": "moderate",
+  "outdoor": false,
+  "hours": {
+   "open": "12:00",
+   "close": "22:00"
+  },
+  "items": [
+   {
+    "label": "Ice cream",
+    "cents": 600
+   }
+  ],
+  "note": "Old-school counter",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v22",
+  "label": "Trivia night",
+  "name": "Trivia pub (demo)",
+  "kind": "bar",
+  "area": "Midtown Atlanta",
+  "lat": 33.7772,
+  "lng": -84.3922,
+  "servesMeal": true,
+  "diets": [
+   "vegetarian"
+  ],
+  "alcoholFocus": "bar",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "loud",
+  "outdoor": false,
+  "hours": {
+   "open": "17:00",
+   "close": "01:00"
+  },
+  "items": [
+   {
+    "label": "Trivia and bites",
+    "cents": 2400
+   }
+  ],
+  "note": "Teams of four",
+  "sourceUrl": null,
+  "verified": false
+ },
+ {
+  "id": "v23",
+  "label": "Saturday night market",
+  "name": "Night market (demo)",
+  "kind": "market",
+  "area": "Midtown Atlanta",
+  "lat": 33.7728,
+  "lng": -84.386,
+  "servesMeal": true,
+  "diets": [
+   "halal",
+   "vegetarian",
+   "vegan"
+  ],
+  "alcoholFocus": "optional",
+  "stepFreeEntry": true,
+  "accessibleRestroom": true,
+  "noise": "moderate",
+  "outdoor": true,
+  "hours": {
+   "open": "17:00",
+   "close": "23:00"
+  },
+  "items": [
+   {
+    "label": "Market bites",
+    "cents": 1200
+   }
+  ],
+  "note": "Stalls under string lights",
+  "sourceUrl": null,
+  "verified": false
+ }
+]
