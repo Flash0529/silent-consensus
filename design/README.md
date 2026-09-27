@@ -1,3 +1,5 @@
+> These are the original HackGT 13 design references (the app was called Quiet Consensus then; it is now **Silent Consensus**). The live app follows them for look and feel; flows have since changed (see the main README).
+
 # Quiet Consensus design reference
 
 Eight phone screens (390×844), exported from the design canvas. Open them as reference only: the `<x-dc>`, `<helmet>` and `data-dc-script` wrappers are design-tool markup, and the inline styles hold the real values.

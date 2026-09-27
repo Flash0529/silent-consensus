@@ -118,6 +118,8 @@ describe("toGroupSafe", () => {
   it("only exposes allowlisted member keys", () => {
     const g = toGroupSafe(loadedCircle() as Parameters<typeof toGroupSafe>[0]);
     for (const m of g.members)
-      expect(Object.keys(m).sort()).toEqual(["avatarColor", "hasVoted", "id", "interviewStatus", "isOrganizer", "name"]);
+      // photo: the member's own profile picture, which they chose to show to people they chat with.
+      // isAdmin: group admins are visible to the group (like any group chat app).
+      expect(Object.keys(m).sort()).toEqual(["avatarColor", "hasVoted", "id", "interviewStatus", "isAdmin", "isOrganizer", "name", "photo"]);
   });
 });

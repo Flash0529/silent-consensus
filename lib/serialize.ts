@@ -1,3 +1,4 @@
+import { readRoomStyle } from "@/lib/hushstyle";
 import { dateLabel } from "@/lib/dates";
 
 // THE ONLY serializer for group-facing routes. Explicit allowlist: nothing from
@@ -15,12 +16,22 @@ type CircleIn = {
   foundCount?: number | null;
   replanCount?: number;
   organizerId: string | null;
+  // Only whether a group text exists is exposed (never the SID).
+  groupConversationSid?: string | null;
+  mode?: string;
+  lastDisparityAt?: Date | null;
+  isDirect?: boolean;
+  color?: string | null;
+  bgImage?: string | null;
+  photo?: string | null;
+  hushStyle?: unknown;
   members: {
     id: string;
     name: string;
     avatarColor: string;
     role: string;
     interviewStatus: string;
+    account?: { photo: string | null } | null;
   }[];
   plans?: {
     id: string;
@@ -100,11 +111,23 @@ export function toGroupSafe(circle: CircleIn) {
     planningStage: circle.planningStage,
     foundCount: circle.foundCount ?? null,
     canReplan: (circle.replanCount ?? 0) < 1,
+    groupText: !!circle.groupConversationSid,
+    mode: circle.mode ?? "FRIENDS",
+    isDirect: !!circle.isDirect,
+    color: circle.color ?? null,
+    bgImage: circle.bgImage ?? null,
+    photo: circle.photo ?? null,
+    // This chat's Hush (name / tone / how proactive), set in chat settings.
+    hush: readRoomStyle(circle.hushStyle),
+    checkInsStarted: !!circle.lastDisparityAt,
     members: circle.members.map((m) => ({
       id: m.id,
       name: m.name,
       avatarColor: m.avatarColor,
+      photo: m.account?.photo ?? null,
       isOrganizer: m.id === circle.organizerId,
+      // Group admins (can add, remove and promote people). Everyone in the group can see who they are.
+      isAdmin: m.role === "ORGANIZER" || m.role === "ADMIN",
       interviewStatus: m.interviewStatus,
       hasVoted: voted.has(m.id),
     })),
@@ -131,7 +154,7 @@ export function toGroupSafe(circle: CircleIn) {
 export const groupInclude = {
   members: {
     orderBy: { createdAt: "asc" as const },
-    select: { id: true, name: true, avatarColor: true, role: true, interviewStatus: true },
+    select: { id: true, name: true, avatarColor: true, role: true, interviewStatus: true, account: { select: { photo: true } } },
   },
   plans: {
     orderBy: { version: "desc" as const },

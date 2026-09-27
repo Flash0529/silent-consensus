@@ -1,3 +1,5 @@
+> **Historical document (HackGT 13).** The product has since been renamed **Silent Consensus** and rebuilt messaging-first (accounts, chats, a private Hush chat, real places and events, Stripe chip-in, business admin). See [`README.md`](../README.md) for how it works today and [`docs/HANDOFF.md`](HANDOFF.md) for status.
+
 # Claude Code brief: Quiet Consensus (HackGT 13)
 
 Paste this whole file into Claude Code from the root of an empty repo. Put the `design/` folder from this handoff in the repo root first.

@@ -50,7 +50,7 @@ export function Composer({ onSend, onMic, micActive, disabled, placeholder = "Te
           onChange={(e) => setText(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className="h-composer w-full rounded-full bg-surface pl-[22px] pr-[60px] text-body shadow-float outline-none placeholder:text-muted disabled:bg-surface"
+          className="h-composer w-full rounded-full bg-bubble pl-[22px] pr-[60px] text-body text-ink shadow-float outline-none outline-offset-1 placeholder:text-muted focus:outline-1 focus:outline-galaxy disabled:opacity-60"
         />
         {hasText || !onMic ? (
           <button

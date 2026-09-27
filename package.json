@@ -1,5 +1,5 @@
 {
-  "name": "hush",
+  "name": "quiet-consensus",
   "version": "0.1.0",
   "private": true,
   "description": "Plans everyone can say yes to.",
@@ -21,6 +21,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "framer-motion": "^13.4.4",
+    "ical.js": "^2.2.1",
     "nanoid": "^6.0.1",
     "next": "^16.3.6",
     "openai": "^7.23.0",

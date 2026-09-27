@@ -3,64 +3,79 @@
 @tailwind utilities;
 
 /*
- * Theme tokens as RGB triplets so Tailwind can apply opacity (bg-surface/0 etc).
- * Light is the default. Dark applies when the user picks it (data-theme="dark"),
- * or when they're on "System" (no data-theme) and the OS prefers dark.
+ * Midnight hardware gallery (docs/HANDOFF.md §5).
+ *
+ * Theme roles are registered custom properties, so they can be *transitioned*. The marketing site
+ * root (.site) switches data-theme as different sections reach the middle of the viewport
+ * (components/site/ThemeController.tsx), and the whole page (background, text, tiles, keylines)
+ * animates to the new theme. No section paints its own background, so there are never hard
+ * edges or baked-in gradient "fades" between black and white.
+ */
+@property --c-page { syntax: "<color>"; inherits: true; initial-value: #000000; }
+@property --c-fg { syntax: "<color>"; inherits: true; initial-value: #f5f5f7; }
+@property --c-ash { syntax: "<color>"; inherits: true; initial-value: #86868b; }
+@property --c-slate { syntax: "<color>"; inherits: true; initial-value: #6e6e73; }
+@property --c-tile { syntax: "<color>"; inherits: true; initial-value: #000000; }
+@property --c-panel { syntax: "<color>"; inherits: true; initial-value: #1d1d1f; }
+@property --c-graphite { syntax: "<color>"; inherits: true; initial-value: #0e0e0e; }
+@property --c-steel { syntax: "<color>"; inherits: true; initial-value: #333336; }
+@property --c-keyline { syntax: "<color>"; inherits: true; initial-value: #282828; }
+@property --c-link { syntax: "<color>"; inherits: true; initial-value: #2997ff; }
+
+/*
+ * Web-app tokens (RGB triplets so Tailwind can apply opacity), set to the Galaxy palette so the app
+ * screens match the home page. Galaxy dark is the default (like the site's opening sections);
+ * choosing "Light" in the app's Settings switches to the Galaxy light palette. No drop shadows:
+ * floating controls get a 1px keyline.
  */
 :root {
+  color-scheme: dark;
+  --ink: 245 245 247;        /* Porcelain */
+  --ink-2: 210 210 215;
+  --muted: 134 134 139;      /* Ash */
+  --hairline: 51 51 54;      /* Steel */
+  --divider: 40 40 40;       /* Keyline */
+  --surface: 0 0 0;          /* Obsidian stage */
+  --bubble: 29 29 31;        /* Carbon */
+  --surface-2: 14 14 14;     /* Graphite */
+  --control: 29 29 31;
+  --backdrop: 0 0 0;
+  --track: 51 51 54;
+  --on-ink: 0 0 0;
+  --danger: 255 105 97;
+  --shadow-float: 0 0 0 1px #333336;
+}
+
+:root[data-theme="light"] {
   color-scheme: light;
-  --ink: 11 11 12;
-  --ink-2: 58 58 60;
-  --muted: 110 110 115;
-  --hairline: 229 229 234;
-  --divider: 237 237 240;
-  --surface: 255 255 255;
-  --bubble: 242 242 243;
-  --surface-2: 247 247 248;
-  --control: 237 237 240;
-  --backdrop: 189 189 194;
-  --track: 209 209 214;
+  --ink: 29 29 31;
+  --ink-2: 66 66 69;
+  --muted: 110 110 115;      /* Slate */
+  --hairline: 210 210 215;
+  --divider: 210 210 215;
+  --surface: 245 245 247;    /* Porcelain stage */
+  --bubble: 255 255 255;
+  --surface-2: 232 232 237;
+  --control: 232 232 237;
+  --backdrop: 29 29 31;
+  --track: 210 210 215;
   --on-ink: 255 255 255;
   --danger: 185 28 28;
-  --shadow-float: 0 6px 24px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-float: 0 0 0 1px #d2d2d7;
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --ink: 242 242 247;
-  --ink-2: 199 199 204;
-  --muted: 152 152 159;
-  --hairline: 58 58 62;
-  --divider: 44 44 48;
-  --surface: 17 17 19;
-  --bubble: 40 40 44;
-  --surface-2: 28 28 31;
-  --control: 48 48 52;
-  --backdrop: 6 6 7;
-  --track: 72 72 78;
-  --on-ink: 11 11 12;
-  --danger: 248 113 113;
-  --shadow-float: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --ink: 242 242 247;
-    --ink-2: 199 199 204;
-    --muted: 152 152 159;
-    --hairline: 58 58 62;
-    --divider: 44 44 48;
-    --surface: 17 17 19;
-    --bubble: 40 40 44;
-    --surface-2: 28 28 31;
-    --control: 48 48 52;
-    --backdrop: 6 6 7;
-    --track: 72 72 78;
-    --on-ink: 11 11 12;
-    --danger: 248 113 113;
-    --shadow-float: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  }
+:root,
+.theme-dark {
+  --c-page: #000000;
+  --c-fg: #f5f5f7;
+  --c-ash: #86868b;
+  --c-slate: #6e6e73;
+  --c-tile: #000000;
+  --c-panel: #1d1d1f;
+  --c-graphite: #0e0e0e;
+  --c-steel: #333336;
+  --c-keyline: #282828;
+  --c-link: #2997ff;
 }
 
 html,
@@ -69,6 +84,227 @@ body {
   color: rgb(var(--ink));
   -webkit-font-smoothing: antialiased;
 }
+
+html { scroll-behavior: smooth; }
+::selection { background: #0381fe; color: #ffffff; }
+
+.site {
+  background-color: var(--c-page);
+  color: var(--c-fg);
+  transition:
+    --c-page 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-fg 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-ash 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-slate 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-tile 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-panel 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-graphite 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-steel 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-keyline 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    --c-link 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Charcoal band: the Carbon stage, black tiles sit on it. */
+.site[data-theme="carbon"] { --c-page: #1d1d1f; }
+/* Pale comparison surface. */
+.site[data-theme="light"] {
+  --c-page: #f5f5f7;
+  --c-fg: #1d1d1f;
+  --c-ash: #6e6e73;
+  --c-slate: #86868b;
+  --c-tile: #ffffff;
+  --c-panel: #e8e8ed;
+  --c-graphite: #ffffff;
+  --c-steel: #d2d2d7;
+  --c-keyline: #d2d2d7;
+  --c-link: #0066cc;
+}
+.site[data-theme="light"] .spotlight { visibility: hidden; filter: opacity(0); }
+
+/* Device screens and dark chrome keep their dark values whatever the page theme is. */
+.site .theme-dark { color: var(--c-fg); }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+
+  .glass { backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+  .animate-bob { animation: bob 6s ease-in-out infinite; }
+
+  /* Soft violet-black rim light behind the Hush hardware. Only lit on the dark stages. */
+  .spotlight {
+    background: radial-gradient(closest-side, rgba(91, 61, 245, 0.28), rgba(91, 61, 245, 0.08) 55%, transparent);
+    transition: visibility 0.9s, filter 0.9s;
+  }
+
+  /* Chrome display letters (hero). Product imagery, like the reference's extruded "PRO". */
+  .chrome-text {
+    background: linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #e5e5ea 14%,
+      #9a9aa0 32%,
+      #f5f5f7 47%,
+      #6e6e73 56%,
+      #2c2c2e 70%,
+      #8e8e93 86%,
+      #e5e5ea 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .chrome-glint {
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      transparent 18%,
+      rgba(120, 160, 255, 0.75) 26%,
+      transparent 34%,
+      transparent 58%,
+      rgba(255, 176, 102, 0.6) 68%,
+      transparent 78%,
+      transparent 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    mix-blend-mode: screen;
+    animation: glint 9s ease-in-out infinite alternate;
+  }
+  .chrome-depth {
+    color: #111113;
+    text-shadow: 0 1px 0 #2c2c2e, 0 2px 0 #242426, 0 3px 0 #1c1c1e, 0 4px 0 #161618, 0 5px 0 #121214,
+      0 6px 0 #0e0e10, 0 18px 40px rgba(0, 0, 0, 0.9);
+  }
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+@keyframes glint {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-bob, .chrome-glint { animation: none; }
+  .site { transition-duration: 0.2s; }
+}
+
+.site :focus-visible { outline: 2px solid var(--c-link); outline-offset: 3px; border-radius: 10px; }
+
+/* Range slider used in the Your Hush studio and Teams policy panel */
+.qc-range { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; }
+.qc-range::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 999px;
+  background: linear-gradient(90deg, #0381fe var(--pct), var(--c-steel) var(--pct));
+}
+.qc-range::-moz-range-track { height: 4px; border-radius: 999px; background: var(--c-steel); }
+.qc-range::-moz-range-progress { height: 4px; border-radius: 999px; background: #0381fe; }
+.qc-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; margin-top: -12px;
+  width: 28px; height: 28px; border-radius: 50%; background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform .15s ease;
+}
+.qc-range:active::-webkit-slider-thumb { transform: scale(1.12); }
+.qc-range::-moz-range-thumb {
+  width: 28px; height: 28px; border: 0; border-radius: 50%; background: #ffffff;
+}
+
+/* A light pulse travelling along the hero's connector lines. */
+@keyframes travel {
+  0% { transform: translateX(0); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(var(--travel, 48px)); opacity: 0; }
+}
+.animate-travel { animation: travel 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@media (prefers-reduced-motion: reduce) { .animate-travel { animation: none; opacity: 0; } }
+
+/* ---------- Startup animation (components/site/Intro.tsx) ---------- */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: #000000;
+  transition: opacity 0.75s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.75s;
+  /* Failsafe: never trap the page if scripts don't run. */
+  animation: intro-failsafe 0.6s ease 6s forwards;
+}
+.intro-leave { opacity: 0; visibility: hidden; }
+.intro-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+}
+.intro-leave .intro-stage { transform: scale(0.9) translateY(-12px); opacity: 0; }
+.intro-glow {
+  position: absolute;
+  left: 50%;
+  top: 52px;
+  width: 440px;
+  height: 440px;
+  transform: translate(-50%, -50%) scale(0.5);
+  background: radial-gradient(closest-side, rgba(91, 61, 245, 0.38), rgba(91, 61, 245, 0.08) 55%, transparent);
+  opacity: 0;
+  animation: intro-glow 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards;
+  pointer-events: none;
+}
+.intro-mark { position: relative; overflow: visible; }
+.intro-outline { stroke-dasharray: 1; stroke-dashoffset: 1; animation: intro-draw 1s cubic-bezier(0.65, 0, 0.35, 1) 0.1s forwards; }
+.intro-fill {
+  opacity: 0;
+  transform-origin: 60px 56px;
+  transform: scale(0.92);
+  animation: intro-fill 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.85s forwards;
+}
+.intro-eye { stroke-dasharray: 1; stroke-dashoffset: 1; animation: intro-draw 0.38s cubic-bezier(0.65, 0, 0.35, 1) 1.2s forwards; }
+.intro-eye-2 { animation-delay: 1.32s; }
+.intro-word {
+  position: relative;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  color: #f5f5f7;
+  letter-spacing: 0.4em;
+  opacity: 0;
+  animation: intro-word 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.25s forwards;
+}
+.intro-line { position: relative; width: 120px; height: 2px; overflow: hidden; border-radius: 99px; background: #333336; }
+.intro-line > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: #f5f5f7;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: intro-line 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+}
+@keyframes intro-draw { to { stroke-dashoffset: 0; } }
+@keyframes intro-fill { to { opacity: 1; transform: scale(1); } }
+@keyframes intro-glow { to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes intro-word { to { opacity: 1; letter-spacing: 0.02em; } }
+@keyframes intro-line { to { transform: scaleX(1); } }
+@keyframes intro-failsafe { to { opacity: 0; visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .intro { display: none; } }
+
+/* Privacy Policy / Terms (app/(legal)) */
+.legal h1 { font-size: 2.25rem; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; }
+.legal .updated { margin-top: 0.5rem; margin-bottom: 2.5rem; font-size: 0.875rem; color: #86868b; }
+.legal h2 { margin-top: 2.25rem; margin-bottom: 0.6rem; font-size: 1.2rem; font-weight: 700; }
+.legal p, .legal li { color: #d2d2d7; line-height: 1.7; }
+.legal ul { list-style: disc; padding-left: 1.4rem; }
+.legal li + li { margin-top: 0.4rem; }
+.legal strong { color: #f5f5f7; font-weight: 600; }
 
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar { display: none; }

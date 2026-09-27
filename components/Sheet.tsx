@@ -20,7 +20,7 @@ export function Sheet({ open, onClose, children, label }: Props) {
           <motion.button
             type="button"
             aria-label="Close"
-            className="absolute inset-0 bg-black/30"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

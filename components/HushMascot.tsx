@@ -53,9 +53,12 @@ export function HushMascot({
   size = 36,
   label,
   animated = false,
+  color = "#5B3DF5",
 }: {
   size?: number;
   label?: string;
+  /** Body colour (the marketing site uses other finishes). */
+  color?: string;
   /** Wake-up blink on mount, then an occasional idle peek. */
   animated?: boolean;
 }) {
@@ -109,7 +112,7 @@ export function HushMascot({
     >
       <path
         d="M60 12c26.5 0 48 18.8 48 42s-21.5 42-48 42c-5.9 0-11.6-.9-16.8-2.6L22 104l5.6-18.2C18.1 78.1 12 66.7 12 54 12 30.8 33.5 12 60 12z"
-        fill="#5B3DF5"
+        fill={color}
       />
       <g ref={lids} fill="none" stroke="#fff" strokeWidth={stroke} strokeLinecap="round">
         <path d="M40 55c3.4 4.8 11.6 4.8 15 0" />

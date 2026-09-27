@@ -1,202 +1,230 @@
-# Hush
+# Silent Consensus
 
-**Plans everyone can say yes to.**
+**Group chats that actually make plans.** Live at **https://silentconsensus.world**.
 
-**Hush** is a web app with an AI planner that privately asks each friend what they can't say in the group chat, such as budget, food, drinks, getting around, and timing. Hush then proposes one plan everyone can accept and explains it without revealing anyone's reasons. It also quietly balances the cost with an anonymous chip-in.
+Silent Consensus is a messaging app with an AI planner, **Hush**, built in. You chat with your friends (or your
+team) like any group chat. When a plan starts to form, Hush takes it private: it asks each person, in their own
+private **Hush chat**, whether they can make it and what works for them. Then it finds real places and events and
+builds one plan everyone confirms before it's posted back to the group. Nobody sees anyone else's answers, ever.
 
-The same idea works for harder conversations. In **mediation mode**, Hush hears each person's side of a disagreement privately. It then proposes a fair way forward without quoting anyone or revealing what they kept private.
-
-Built at **HackGT 13** for the Social Good track and the Meta challenge, "Bringing People Closer Together with AI".
+It started at **HackGT 13** (Social Good track, Meta challenge "Bringing People Closer Together with AI") as
+*Quiet Consensus*. It has since been rebuilt messaging-first and renamed to match its domain.
 
 ---
 
 ## The problem
 
-Group chats plan for the loudest person. People with a quiet limit (money above all, but also a religious diet, sobriety, or a disability) just say "I'm busy" and slowly drop out.
+Group chats plan for the loudest person. People with a quiet limit, like money, a religious diet, sobriety, a
+disability or a packed week, just say "I'm busy" and slowly drop out.
 
-- 67% of Americans declined social events in the past two years primarily because of cost, and 56% never told loved ones that money was the reason ([CFP Board, Jan 2026, n=1,138](https://www.cfp.net/news/2026/03/financial-fomo-quietly-straining-american-relationships)).
-- 69% of Americans have declined a social outing because it was too expensive, and 36% have had a friendship end over money ([LendingTree, July 2025, n=2,000](https://www.lendingtree.com/credit-cards/study/friends-money-report/)).
+- 67% of Americans declined social events in the past two years mainly because of cost, and 56% never told loved ones money was the reason ([CFP Board, Jan 2026, n=1,138](https://www.cfp.net/news/2026/03/financial-fomo-quietly-straining-american-relationships)).
+- 69% have declined a social outing because it was too expensive; 36% have had a friendship end over money ([LendingTree, July 2025, n=2,000](https://www.lendingtree.com/credit-cards/study/friends-money-report/)).
 - Loneliness affects 1 in 6 people worldwide and is linked to more than 871,000 deaths a year ([WHO, June 2025](https://who.int/news/item/30-06-2025-social-connection-linked-to-improved-heath-and-reduced-risk-of-early-death)).
-- 12% of Americans reported no close friends in 2021, up from 3% in 1990 ([Survey Center on American Life](https://www.americansurveycenter.org/research/the-state-of-american-friendship-change-challenges-and-loss/)).
 
-Hush lets people stay in without explaining themselves.
+Silent Consensus lets people stay in without explaining themselves.
 
-## How it works
+---
 
-### Plan a hangout
+## What it does
 
-1. **Start a plan.** The organizer chats with Hush about what, when, and where, then shares a link or QR code. There are no accounts.
-2. **Private interviews.** Each friend has a short, private chat with Hush. Every question offers lettered quick replies (A–E) as well as free text, and Hush never asks *why*. At the end, Hush shows "Here's what I'll plan around" in their own words for them to confirm.
-3. **The group sees only progress.** It shows who has finished, never what anyone said.
-4. **Hush plans.** A hybrid pipeline filters real venue data, composes candidate plans, balances cost, writes a group-safe explanation, and runs a leak check (see [AI pipeline](#ai-pipeline)).
-5. **Quiet chip-in.** Friends with room in their budget privately see "Want to quietly help?" The pool covers anyone's shortfall. Nobody sees who gave or who was helped.
-6. **Your share.** Each person sees only their own share and line items, and can pay through a mock payment sheet ("Demo payment. No real money moves.").
-7. **Vote.** The choices are A "I'm in", B "Different time", or C "Tweak something". B and C get a private follow-up from Hush, and the organizer can ask for one replan.
+### Messaging (the app first)
 
-### Work through a disagreement
+- **Accounts:** email and password, plus an optional phone. You're nudged to add a phone right after sign-up; it's used for password reset, two-step login, and letting friends find you.
+- **Chats:**
+  - group chats and DMs, with invite links and QR codes
+  - add friends from contacts (Android Chrome) or by phone or email
+  - a **friend-invite link** when someone isn't on the app yet: they sign up with it and you're connected automatically
+- **Messages:**
+  - iMessage-style **tapbacks**: one per person; press and hold on phones, right-click or hover on computers
+  - **reply threads** like iOS: a side panel on desktop, full screen on phones
+  - **search** across every chat's messages
+- **Files:** photos, PDFs, text and Office files up to 15 MB.
+  - They're **deleted after 7 days**.
+  - Hush can't read a file unless its sender answers "Yes" to a fixed question: *"Would you like this to be seen by Hush AI?"* (see Privacy below).
+- **Chat settings:** name, color, background, photo, and "Hush in this chat" (what the group calls Hush, its personality, and how proactive it is).
+- **Groups:**
+  - **Admins** add and remove people and promote others.
+  - Removed people can't rejoin with the link until an admin adds them back.
+  - When the last admin leaves, the longest-standing member takes over.
+- **Deleting chats:** Delete for me (iMessage-style: the chat comes back only with new messages), Leave group, or Delete for everyone (admins).
+  - These are in chat settings.
+  - Also: press and hold a chat in the list (or right-click it) for a preview and these options, or use the trash icon on hover.
+- **Devices** (Settings): every browser you're logged in on, when it was last active, **remember this device** (skip two-step codes there), and **remove** a device (logs it out).
+- **Desktop and phone:** every page has both.
+  - On computers the layout is Teams-like: an app rail, the chat list, and the open chat.
+  - Sign-in pages get a split screen.
+  - Phones get a single column with a ☰ menu.
 
-1. The organizer names the topic neutrally, for example "The apartment".
-2. Hush interviews each person privately in this order: what happened, how it affected them, what they need, what they hope for, what they'd offer, and what's off-limits.
-3. **Consent.** Hush shows the short, nameless gist it would bring to the group. The person chooses **Yes, use this**, **Change it**, or **Keep all of this private**. Only approved gists reach the drafting step.
-4. Hush drafts **a way forward**. It covers what everyone shares, what matters to the group, 3–5 concrete agreements, and how to talk about it. Each person also gets a **private brief**: where their needs show up, an opener in their own voice, and something they could offer.
-5. **Safety.** If anyone mentions danger, abuse, or self-harm, Hush replies privately with resources (988, and the National Domestic Violence Hotline at 1-800-799-7233). That person's content never reaches the group, and the mediation pauses.
+### Hush, the planner (the AI second)
 
-### Remember me (opt-in)
+- **Hush is its own chat,** pinned at the top of your chat list with a **verified ✓**.
+  - It's one private chat across all your groups, labeled by group.
+  - Nobody can put a check mark in their name or call themselves "Hush".
+- **It starts on its own:**
+  - Hush reads the group chat and notices when a plan is forming ("concert this month, then food after?"), or when a plan is getting stuck ("maybe not, I'm busy").
+  - You can also ask it ("hey Hush, help us out") or tap **Plan event**.
+- **Plan event:**
+  - Whoever taps it describes the plan to Hush in a normal chat, with suggestions above the box you type in.
+  - Hush then checks with everyone else privately.
+- **Everything happens in the Hush chat, and you stay there until the end:**
+  1. **Can you make it?** Asked once, at the start. "Can't" gets a gentle "would another time work?" and never a "why".
+  2. **A few details, only what's needed:**
+     - times, and preferences for each part (genre, cuisine…)
+     - where you're coming from: share your location or type a city or ZIP; it's rounded to about 1 km
+     - what's comfortable to spend, only if it costs money and Hush doesn't already know
+  3. **"Stay here."** Once everyone has answered, Hush builds the plan:
+     - It uses everyone's answers with names hidden, plus linked calendars (busy/free only).
+     - It finds **real places and events** near the middle of where everyone's coming from, with Resy, OpenTable, Ticketmaster and Map links.
+     - Plans can have **several parts** (e.g. a concert, then dinner after).
+     - "Anything works" counts as flexible: a specific choice from someone else wins.
+  4. **"Does this look right?"** Asked once, at the end. "Change something" lets you say what, and Hush revises it for everyone (up to twice).
+  5. When everyone has confirmed, **the plan is posted to the group** and you're taken back to the chat.
+- **The group** only ever sees one line ("I'll work out the details with each of you privately"), a progress card ("2 of 3 answered"), and the final plan card.
+- **The quiet chip-in:**
+  - If the plan costs more than someone said they're comfortable with, friends with room are asked privately: *"Want to quietly help?"*
+  - Payments go through **Stripe Checkout in test mode**; use card `4242 4242 4242 4242`, any future date, any CVC. No real money moves, ever.
+  - Whoever was helped sees their share go down, and never learns who gave.
+  - Everyone can pay their own share the same way.
+- **Make Hush yours** (Settings, same as the Friends page studio):
+  - how your Hush talks to you: name, color, warm/playful/direct, length, how proactive, emoji, quiet hours
+  - what it plans around: diet, allergies, cuisines, spice, drinks, budget, step-free access, travel time, vibe, when you're usually free
+- **What Hush knows about you:** every person has a small **Markdown profile**, which Hush reads before talking to them. You can see, edit, clear or download it (`.md`) in Settings.
+- **Calendars:**
+  - Link Apple (iCloud public link), Google (secret iCal address or Google sign-in) or Outlook (published link).
+  - Hush only reads busy/free and never shows your schedule to anyone.
+- **Work groups:**
+  - Hush tracks meetings, action items (with owner and due date) and decisions.
+  - A **tone check** reads each message before coworkers do and privately suggests a calmer rewrite.
 
-After confirming, Hush offers: "Want me to remember this for next time? Only this phone can use it."
+### Business (Hush for Teams)
 
-- On the next plan, that phone opens with "Welcome back! Last time you told me: … Still right?", and one tap finishes the interview.
-- Preferences are tied to the **device** with an httpOnly cookie, never to a name, so typing someone's name on another phone reveals nothing.
-- **Settings → Forget this device** deletes them.
+- **Work sign-in** with a company email. The first person creates the company and becomes its admin; others join automatically by email domain.
+- **Management page** (`/admin`):
+  - people and roles
+  - each person's manager and an HR flag
+  - policies: tone check, auto-detect, and **manager review**
+  - company name and work groups
+- **Manager review** (off by default):
+  - Someone who sends a flagged message as written ("Send mine anyway") 3 times in 7 days gets a review by their manager (HR for serious content, or if no manager is set).
+  - The warning is shown before every send.
+  - The person is told when it happens.
+  - Reviews contain only those messages and Hush's reason, never private Hush chats.
+  - Managers and HR see them at `/reviews`.
+- **Demo company:** Northwind Studio.
+  - Log in → *Sign in with your work account* → *Use the demo company*.
+  - Accounts: `priya@northwind.test` (admin and manager), `jordan@`, `sam@`, `alex@`, `morgan@` (HR). Password `northwind-demo` for all.
 
-## AI pipeline
+---
 
-```mermaid
-flowchart LR
-  subgraph Private["Private (one person each)"]
-    I[Interview agent<br/>LLM + deterministic fast paths] --> V[(Vault / Perspective)]
-  end
-  V --> F[1 · Hard filter<br/>code: diet, alcohol, step-free,<br/>hours, time windows]
-  F --> C[2 · Compose<br/>LLM, venue IDs only]
-  C --> M[3 · Cost + chip-in<br/>code: allocate.ts]
-  M --> E[4 · Explain<br/>LLM]
-  E --> G{5 · Leak guard<br/>rules + LLM judge}
-  G -- leak --> E
-  G -- pass --> P[6 · Plan card]
-  V -. consented gists only .-> MD[Mediator<br/>map → draft → guard → private briefs]
-```
+## Privacy model (the core promise)
 
-- **Interview agent** (`lib/ai/interview.ts`). It extracts structured constraints every turn, validated with Zod. Key values like "Under $15" or "after six" are parsed deterministically, so the most important numbers never depend on a model. A pacing guard stops it from looping on a topic.
-- **Hard filter** (`lib/ai/filter.ts`). Pure code: in the demo group, 23 venues become 9. Names never reach the composer; it sees only an anonymous summary of the group's needs.
-- **Compose.** The model may use only venue IDs from the filtered list. Prices and facts come from `data/venues.json`, never from the model.
-- **Chip-in math** (`lib/money/allocate.ts`). Pure integer-cent math with tests: shortfall, headroom, suggestions capped at $10, and proportional cover with exact rounding. Refunds make sure the pool never collects more than it needs.
-- **Leak guard** (`lib/ai/guard.ts`). Two layers, and both must pass:
-  - *Rules* reject names next to a need, needs stated as reasons ("since…", "for someone who…"), private budget numbers, and repeated private phrases. "Why this works" lines may not name any specific need at all.
-  - *LLM judge* answers: "Could any group member infer a specific person's private constraint?"
-  - The draft is regenerated up to twice with the judge's feedback, then falls back to a safe template. "Checked: nothing anyone told Hush shows here" appears only when both layers pass.
-- **Provider chain** (`lib/ai/client.ts`). There is one client for three OpenAI-compatible providers, tried in order:
-  1. **Meta Model API** (`muse-spark-1.3`, primary)
-  2. **Grok**
-  3. **TypeSafe Jev** via OpenRouter
+- **Group-facing data** only comes from explicit allowlists (`lib/serialize.ts#toGroupSafe`, guarded by `tests/serialize.test.ts`), or from messages people posted to the group themselves.
+- **Private answers:**
+  - Answers in the Hush chat, RSVPs, budgets and locations are stored per person and never shown to anyone else, not even as a breakdown.
+  - The group sees only counts ("2 of 3 answered") and the final result.
+  - Group-level prompts see everyone's profile **with names replaced by P1, P2…**, and results are checked for names before posting.
+- **Profiles in prompts:** prompts whose output the whole group sees get only the public part of people's profiles (name, time zone). Private chats get the whole profile for that one person only.
+- **Files:**
+  - `lib/files.ts#aiFileLines` is the only code that puts file contents into a prompt, and it only reads files whose sender answered "Yes".
+  - Only the sender can answer, and group prompts never include FILE messages otherwise.
+- **Storage:**
+  - Phones are stored only hashed and encrypted.
+  - Calendar links and Google tokens are encrypted.
+  - Locations are rounded to about 1 km and never displayed.
+- **Money:** payments are Stripe test mode only. A live key is treated as "not configured".
 
-  Each call uses a JSON schema (also stated in the prompt), Zod validation, one repair retry, and backoff retries for transient errors. Every call is logged to an `AiTrace` row, which stores labels and counts only, never private text.
-
-## Privacy model
-
-- **Private by construction.** Every group route serializes through one allowlist function, `toGroupSafe()` (`lib/serialize.ts`). A test loads a circle with budgets, private notes, and private messages, then asserts that none of it appears in the output.
-- **No accounts.** Each circle sets a signed, httpOnly device cookie, and the database stores only a hash of the token.
-- **The organizer sees what everyone sees:** who has finished, and the plan.
-- **The chip-in is anonymous.** No route lists contributions. A recipient sees only their own coverage line, and helpers see the pool as a total.
-- **Mediation shares only consented, nameless gists.** Stories, feelings, and off-limits items stay in the vault. The guard uses them only to *block* leaks.
-- **Keys stay server-side.** AI routes are rate-limited per device. Payments are mock only.
+---
 
 ## Tech stack
 
-Next.js 16 (App Router), TypeScript, Tailwind CSS, Framer Motion, Prisma with Postgres (Neon), SWR polling (2 seconds), and Zod. The UI follows the 8 phone screens in [`design/`](design/), and supports light and dark themes.
+- **App:** Next.js 16 (App Router, Turbopack), React 19, Tailwind 3.4, Framer Motion, SWR polling.
+- **Data:** Prisma 6 on Supabase Postgres, with row-level security on every table.
+- **Validation:** Zod 4 for every input and every AI output.
+- **AI:** `lib/ai/client.ts#callLLM`, OpenAI-compatible with provider fallback (Meta Model API, xAI, OpenRouter) and schema-validated JSON with repair.
+- **Places and events:**
+  - Google Places API (New) when a key is set; OpenStreetMap (Nominatim, Overpass) as the free fallback.
+  - Ticketmaster Discovery for events.
+  - Resy, OpenTable and Google Maps deep links.
+- **Calendars:** `ical.js` for ICS links (allowlisted hosts, SSRF-guarded) and Google OAuth free/busy.
+- **Payments:** Stripe Checkout over REST (no SDK), test mode only.
+- **Texting:** Twilio Verify for phone codes. Twilio Conversations group texting is built, pending A2P approval.
 
 ## Getting started
 
-Requirements: Node 20+ and a Postgres database (a free Neon database works).
-
 ```bash
 npm install
-cp .env.example .env    # then fill in the values below
-npx prisma db push      # create the tables
-npm run dev -- -H 0.0.0.0   # -H lets phones on the same Wi-Fi open http://<your-LAN-IP>:3000
+cp .env.example .env        # then fill it in (never commit it)
+npx prisma db push          # schema → your Postgres
+npm run dev                 # http://localhost:3000
 ```
 
-| Variable | What it's for |
-|---|---|
-| `DATABASE_URL` | Postgres connection string (pooled) |
-| `DIRECT_URL` | Same database without the pooler, used by `prisma db push` |
-| `COOKIE_SECRET` | Signs device cookies. Generate with `openssl rand -hex 32` |
-| `APP_URL` | Base URL used for invite links |
-| `DEMO_MODE` | `true` enables the demo routes and presenter impersonation |
-| `MODEL_API_KEY`, `META_*` | Meta Model API (primary). `META_REASONING=minimal` is recommended |
-| `XAI_API_KEY`, `XAI_*` | Grok (fallback) |
-| `OPENROUTER_API_KEY`, `OPENROUTER_*` | TypeSafe Jev via OpenRouter (fallback) |
-| `LLM_PROVIDERS` | Provider order, for example `meta,xai,openrouter`. Providers without a key are skipped |
+Environment variables (see `.env.example` for all of them):
 
-You need at least one AI key.
+| Variable | What for |
+|---|---|
+| `DATABASE_URL`, `DIRECT_URL` | Postgres (Supabase pooler + direct) |
+| `COOKIE_SECRET`, `PHONE_ENC_KEY` | Signing cookies; encrypting phones, calendar links and tokens (set once; don't change) |
+| `MODEL_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, `LLM_PROVIDERS` | AI providers, in fallback order |
+| `STRIPE_SECRET_KEY` | **Test** key only (`sk_test_…`) for chip-in and paying shares |
+| `GOOGLE_MAPS_API_KEY` | Google Places for restaurants and activities (optional; OpenStreetMap otherwise) |
+| `TICKETMASTER_API_KEY` | Real concerts, games and shows (optional; nearby venues otherwise) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | "Connect Google Calendar" (optional; redirect `…/api/calendar/google/callback`, scope `calendar.freebusy`) |
+| `TWILIO_*` | Phone codes (Verify) and group texting |
+| `OWNER_EMAILS` | Who can open `/owner` (Android waitlist and Teams pilot sign-ups, CSV export) |
+| `UPLOAD_DIR` | Where chat files are kept (default `/home/pi/quiet-consensus/uploads`) |
 
 ### Tests
 
 ```bash
-npm test            # unit tests: chip-in math, privacy serializer, leak guard, filter, parsing
-npm run test:live   # live smoke tests against the configured AI providers
+npm test          # 156 unit tests (privacy allowlist, chip-in math, calendar parsing, names, …)
+npx next build    # type-check + production build
 ```
-
-End-to-end tests (`tests/e2e/`) drive whole stories through a running server and assert privacy and money at every step. They need `npm run dev` running, `DEMO_MODE=true`, and a working AI key. Set `E2E_BASE_URL` to test another host.
-
-```bash
-npm run test:e2e:hangout     # 4 simulated friends → plan → votes → chip-in; Maya pays exactly her $15 cap
-npm run test:e2e:mediation   # 4 roommates → way forward → private follow-up → one replan → agreement
-npm run test:e2e:remember    # opt-in memory on real device cookies; same name on another phone sees nothing
-npm run test:e2e             # all three
-```
-
-## Running the demo
-
-With `DEMO_MODE=true`:
-
-```bash
-# Seed the story: "hangout" (Omar, Maya, Priya, Jordan) or "mediation" ("The apartment")
-curl -X POST localhost:3000/api/demo/seed -H 'Content-Type: application/json' -d '{"story":"hangout"}'
-# → { slug, members: [{ id, name }] }
-```
-
-- **Open any persona's phone** at `http://localhost:3000/c/<slug>/chat?as=<memberId>`. The group view is at `/c/<slug>`.
-- **Let a persona answer on its own.** `POST /api/demo/simulate {"memberId": "..."}` plays one turn: an LLM answers as the persona, using `data/personas.json`.
-- **See the pipeline.** `GET /api/demo/trace?c=<slug>` lists each step with provider, latency, and counts, for example "23 → 9 venues after hard filter", "Cost balanced: shortfall $10", and "Leak check: pass".
-- **Reset.** `POST /api/demo/reset` deletes all demo circles.
-
-In the hangout story, Omar and Priya are returning users with saved preferences. Maya taps "Under $15". The plan comes to $25 a head, and a quiet $10 pool (Omar $5, Priya $5) brings Maya's share to exactly $15.
-
-**Demo venues** in `data/venues.json` are clearly labelled placeholders (`verified: false`, and "Demo venue" in the UI), not real businesses. Before using real places, confirm step-free entry, accessible restrooms, halal options, Saturday hours, and prices.
-
-## Status
-
-| Area | State |
-|---|---|
-| Hangout flow: create, join, interview, plan, chip-in, share, vote, replan | Working; end-to-end tested with four personas |
-| Mediation flow: interview, consent, safety, draft, briefs, vote, redraft | Working; end-to-end tested |
-| Remember me (opt-in, per device) | Working; end-to-end tested |
-| Voice replies (mic → transcript) | Not built yet |
-| Presenter view (`/demo`: four phones, AI trace panel) | Not built yet (the demo API routes exist) |
 
 ## Project layout
 
-```
-app/                 pages (/, /new, /j/[slug], /c/[slug], /c/[slug]/chat, /c/[slug]/share) and API routes
-components/          UI components (chat bubbles, option cards, plan card, chip-in card, …)
-lib/ai/              LLM client, interview, planner, mediator, filter, guard, prompts, schemas
-lib/money/           chip-in allocation
-lib/serialize.ts     toGroupSafe(), the only group serializer
-data/                demo venues and personas
-prisma/schema.prisma data model
-design/              reference screens from the design canvas
-tests/               Vitest unit tests (tests/live: live AI smoke tests, tests/e2e: end-to-end scripts)
-```
+| Path | What's there |
+|---|---|
+| `app/(site)` | Landing pages: `/`, `/friends`, `/teams` |
+| `app/(legal)` | `/privacy`, `/terms`, `/sms` |
+| `app/(app)` | The app: `/start` (chats), `/c/[slug]/group` (a chat), `/hush` (Hush chat), `/settings`, `/people`, `/admin`, `/reviews`, `/login`, `/welcome`, `/invite/[token]` |
+| `app/api` | Route handlers (auth, circles, messages, files, hush, pay/chip-in, calendars, invites, search, org, reviews, owner) |
+| `lib/checkin.ts` | The planning engine: sessions, private Hush chat turns, building the plan, confirming, posting |
+| `lib/findplaces.ts`, `lib/places.ts` | Real places and events; booking and map links |
+| `lib/chipin.ts`, `lib/money/allocate.ts` | Shares and quiet chip-in (with Stripe) |
+| `lib/personmd.ts`, `lib/hushstyle.ts` | Per-person Markdown profile; "Make Hush yours" |
+| `lib/calendar.ts` | ICS/Google free-busy, time zones, finding free slots |
+| `lib/files.ts` | Attachments, 7-day cleanup (`instrumentation.ts`), the AI consent gate |
+| `lib/review.ts` | Manager review (business) |
+| `lib/members.ts`, `lib/names.ts` | Group admins; names without check marks |
+| `lib/ai/*` | Detection, group replies, tone check, the original planner pipeline |
+| `components/*` | UI (chat list, Hush studio, reactions, verified badge, …) |
+| `prisma/schema.prisma` | Data model |
+| `docs/HANDOFF.md` | Living record: status log and what's left |
+
+## Deployment (how it runs today)
+
+Self-hosted on a Raspberry Pi 5:
+- **Service:** the systemd service `quiet-consensus-app` runs `next start` on :3020.
+- **Proxy:** Nginx Proxy Manager, host 14, behind Cloudflare.
+- **Deploy:** `npx next build`, then `sudo systemctl restart quiet-consensus-app`.
+- **Keys:** added through the private *keydrop* page on the owner's homelab; never pasted into chats or committed.
 
 ## Libraries used
 
-All project code was written during HackGT 13. Third-party libraries:
-
 | Library | Use |
 |---|---|
-| [next](https://nextjs.org), [react](https://react.dev), [react-dom](https://react.dev) | App framework and UI |
+| [next](https://nextjs.org), [react](https://react.dev) | App framework and UI |
 | [typescript](https://www.typescriptlang.org) | Types |
-| [tailwindcss](https://tailwindcss.com), [postcss](https://postcss.org), [autoprefixer](https://github.com/postcss/autoprefixer) | Styling |
-| [framer-motion](https://www.framer.com/motion/) | Animation |
-| [prisma](https://www.prisma.io), [@prisma/client](https://www.prisma.io) | Database ORM (Postgres on Neon) |
+| [tailwindcss](https://tailwindcss.com), [framer-motion](https://www.framer.com/motion/) | Styling and animation |
+| [prisma](https://www.prisma.io) | Database ORM (Postgres on Supabase) |
 | [zod](https://zod.dev) | Validation of all AI output and user input |
-| [openai](https://github.com/openai/openai-node) | OpenAI-compatible client for Meta, Grok, and OpenRouter |
-| [swr](https://swr.vercel.app) | Polling for live updates |
-| [qrcode](https://github.com/soldair/node-qrcode) | Invite QR codes |
-| [nanoid](https://github.com/ai/nanoid) | Short, readable invite codes |
-| [vitest](https://vitest.dev) | Tests |
+| [openai](https://github.com/openai/openai-node) | OpenAI-compatible client for Meta, xAI and OpenRouter |
+| [swr](https://swr.vercel.app) | Live updates |
+| [ical.js](https://github.com/kewisch/ical.js) | Reading calendar links (free/busy only) |
+| [qrcode](https://github.com/soldair/node-qrcode), [nanoid](https://github.com/ai/nanoid) | Invite QR codes and codes |
+| [vitest](https://vitest.dev), [puppeteer-core](https://pptr.dev) | Tests (unit; the 200-point browser check) |
 
-Fonts: [Geist](https://vercel.com/font) via `next/font`. AI models: Meta Model API (`muse-spark-1.3`), with Grok and TypeSafe Jev (OpenRouter) as fallbacks.
+Data: © OpenStreetMap contributors (ODbL) via Nominatim/Overpass; Google Places and Ticketmaster when keys are set.
 
 ## License
 

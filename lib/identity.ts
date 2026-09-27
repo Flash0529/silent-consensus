@@ -69,14 +69,21 @@ export async function getMember(slug: string) {
       return null;
     }
   }
-  const decoded = decodeCookie((await cookies()).get(cookieName(slug))?.value);
-  if (!decoded) return null;
-  const m = await db.member.findUnique({
-    where: { tokenHash: hashToken(decoded.token) },
-    include: { circle: true },
-  });
-  if (!m || m.id !== decoded.memberId || m.circle.slug !== slug) return null;
-  return m;
+  const jar = await cookies();
+  const decoded = decodeCookie(jar.get(cookieName(slug))?.value);
+  if (decoded) {
+    const m = await db.member.findUnique({
+      where: { tokenHash: hashToken(decoded.token) },
+      include: { circle: true },
+    });
+    if (m && m.id === decoded.memberId && m.circle.slug === slug) return m;
+  }
+  // Logged in on another device (or cleared cookies): the account's own membership in this plan.
+  const session = jar.get("qc_account")?.value;
+  if (!session) return null;
+  const s = await db.accountSession.findUnique({ where: { tokenHash: hashToken(session) } });
+  if (!s || s.expiresAt < new Date()) return null;
+  return db.member.findFirst({ where: { accountId: s.accountId, circle: { slug } }, include: { circle: true } });
 }
 
 export type CurrentMember = NonNullable<Awaited<ReturnType<typeof getMember>>>;

@@ -22,7 +22,7 @@ export function InviteCard({ slug, title }: { slug: string; title: string }) {
   const share = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title, text: `Join "${title}" on Hush`, url: link });
+        await navigator.share({ title, text: `Join "${title}" on Silent Consensus`, url: link });
       } catch {
         /* dismissed */
       }
@@ -38,9 +38,9 @@ export function InviteCard({ slug, title }: { slug: string; title: string }) {
         alt={`QR code to join ${title}`}
         width={220}
         height={220}
-        className="rounded-list border border-hairline bg-white p-3"
+        className="rounded-media bg-white p-3"
       />
-      <p className="w-full break-all rounded-list border border-hairline bg-surface px-4 py-3 text-secondary text-ink-2">
+      <p className="w-full break-all rounded-media bg-surface px-4 py-3 text-secondary text-ink-2">
         {link}
       </p>
       <div className="grid w-full grid-cols-2 gap-3">

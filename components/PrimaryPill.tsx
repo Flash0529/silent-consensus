@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const cls =
-  "flex h-pill w-full items-center justify-center rounded-full bg-ink text-[18px] font-semibold text-on-ink transition active:scale-[0.98] disabled:opacity-40";
+  "flex h-pill w-full items-center justify-center rounded-full bg-galaxy text-[17px] font-medium text-white transition hover:bg-galaxy-hover active:scale-[0.98] disabled:opacity-40";
 
 type Props = {
   children: React.ReactNode;

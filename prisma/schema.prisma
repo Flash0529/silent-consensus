@@ -34,9 +34,12 @@ enum PlanningStage {
   FAILED
 }
 
+// ORGANIZER: started the group (an admin). ADMIN: promoted by an admin. Admins can add and remove
+// people and make others admins; when the last admin leaves, the longest-standing member takes over.
 enum Role {
   ORGANIZER
   MEMBER
+  ADMIN
 }
 
 enum InterviewStatus {
@@ -98,6 +101,34 @@ model Circle {
   members       Member[]
   plans         Plan[]
   traces        AiTrace[]
+
+  // Twilio group text (spec §2). Group message text is never stored.
+  groupConversationSid String?          @unique
+  // Set while the group text includes someone who hasn't opted in: Hush stays silent there.
+  smsHeldAt            DateTime?
+  proactiveMutedAt     DateTime?
+  lastDisparityAt      DateTime?
+  disparityDay         String?
+  disparityCountToday  Int              @default(0)
+  disparityEvents      DisparityEvent[]
+  groupMessages        GroupMessage[]
+  chatItems            ChatItem[]
+  // FRIENDS or WORK: changes what Hush looks for and how it talks (work: meetings, action items).
+  mode                 String           @default("FRIENDS")
+  // Direct message: a two-person chat (shown with the other person's name/photo).
+  isDirect             Boolean          @default(false)
+  // Work groups created by a business account belong to its company (management page).
+  orgId                String?
+  org                  Organization?    @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  // Chat settings
+  color                String?          // accent for this chat, e.g. #0381fe
+  bgImage              String?          // preset key ("preset:aurora") or JPEG data URL
+  photo                String?          // chat picture, JPEG data URL
+  // This chat's Hush: { botName, tone, proactivity, emoji } (chat settings → "Hush in this chat")
+  hushStyle            Json?
+  asks                 HushAsk[]
+  checkIns             HushCheckIn[]
+  removals             CircleRemoval[]
 }
 
 model Member {
@@ -120,7 +151,27 @@ model Member {
   shares          MemberShare[]
   votes           Vote[]
 
+  // Group chat: when this member last read it (unread badges).
+  lastReadAt      DateTime?
+  // "Delete chat" for just this person: history before this is hidden and the chat leaves their list
+  // until someone posts again (like deleting a conversation in iMessage).
+  clearedAt       DateTime?
+  groupMessages   GroupMessage[]
+  itemResponses   ChatItemResponse[]
+  // The logged-in account this membership belongs to, so plans and chats follow you across devices.
+  accountId       String?
+  account         Account?        @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  // Set when this member is reachable by text (phone verified on the web, or joined by SMS).
+  userId          String?
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  activeFor       User[]          @relation("ActiveMember")
+
+  @@unique([circleId, userId])
+  @@index([accountId])
   @@index([circleId])
+  askAnswers      HushAnswer[]
+  reactions       GroupReaction[]
+  checkIns        HushCheckInReply[]
 }
 
 model Message {
@@ -265,4 +316,457 @@ model Profile {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   members          Member[]
+}
+
+enum LeadKind {
+  WAITLIST
+  PILOT
+}
+
+// Marketing-site sign-ups (early-access waitlist and Teams pilot requests).
+model Lead {
+  id        String   @id @default(cuid())
+  kind      LeadKind
+  email     String
+  name      String?
+  company   String?
+  teamSize  String?
+  source    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([kind, email])
+}
+
+// A phone number, across circles. Phone numbers are PII: only a keyed hash (lookup) and an
+// AES-GCM ciphertext (for sending) are stored, never the plain number (spec §2.2).
+model User {
+  id                String    @id @default(cuid())
+  phoneHash         String    @unique
+  phoneEnc          String
+  displayName       String?
+  // Twilio allows one conversation per phone + Hush-number pair, so a person has ONE private
+  // thread with Hush. It feeds whichever circle's interview is active.
+  dmConversationSid String?   @unique
+  activeMemberId    String?
+  activeMember      Member?   @relation("ActiveMember", fields: [activeMemberId], references: [id], onDelete: SetNull)
+  smsOptedOutAt     DateTime?
+  // SMS opt-in (A2P 10DLC proof of consent): set only when the owner of the number ticked the
+  // unchecked consent box on the web and verified the number. Hush never texts a number without it.
+  smsConsentAt      DateTime?
+  smsConsentIp      String?
+  smsConsentVersion String?
+  createdAt         DateTime  @default(now())
+  members           Member[]
+}
+
+enum DisparityKind {
+  budget
+  diet
+  drinks
+  access
+  timing
+  conflict
+  unclear
+  asked
+}
+
+// Counts and types only, never message text (spec §2.3).
+model DisparityEvent {
+  id         String        @id @default(cuid())
+  circleId   String
+  circle     Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  kind       DisparityKind
+  confidence Float
+  acted      Boolean
+  createdAt  DateTime      @default(now())
+
+  @@index([circleId, createdAt])
+}
+
+// A login (email + password). Passwords are stored only as scrypt hashes; session tokens only as
+// sha256 hashes. Each Member row links to at most one Account.
+model Account {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  name         String
+  passwordHash String
+  // Linked phone (verified by SMS code): password reset + optional two-step login. Hashed + encrypted
+  // like every phone number in the app (lib/phone.ts), never stored plain.
+  phoneHash       String?          @unique
+  phoneEnc        String?
+  phoneVerifiedAt DateTime?
+  twoFactor       Boolean          @default(false)
+  // Profile
+  photo           String?          // small JPEG data URL (resized in the browser)
+  bio             String?
+  // Business: the company this account belongs to (joined by work-email domain) and its role there.
+  orgId           String?
+  org             Organization?    @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  orgRole         String?          // ADMIN | MEMBER
+  // Business: who this person reports to, and whether they're on the HR team (manager review).
+  managerId       String?
+  manager         Account?         @relation("Reports", fields: [managerId], references: [id], onDelete: SetNull)
+  reports         Account[]        @relation("Reports")
+  isHr            Boolean          @default(false)
+  timeZone        String?          // IANA zone from the browser, e.g. America/New_York
+  // This person's Hush notes (Markdown): things they told Hush privately that are worth remembering
+  // (e.g. "weeknights are hard", "vegetarian"). Only Hush reads it; they can see, edit or clear it.
+  hushMd          String?
+  // "Make Hush yours": { botName, color, tone, length, proactivity, emoji, quietHours, quietFrom, quietTo,
+  // diet[], allergies[], cuisines[], spice, drinks, budget, stepFree, travel, vibe[], times[] }
+  hushStyle       Json?
+  createdAt    DateTime         @default(now())
+  members      Member[]
+  sessions     AccountSession[]
+  calendars    CalendarLink[]
+  removals     CircleRemoval[]
+  toneOverrides    ToneOverride[]
+  trustedDevices   TrustedDevice[]
+  invites          FriendInvite[]
+  escalationsAbout Escalation[] @relation("EscalationSubject")
+  escalationsToMe  Escalation[] @relation("EscalationRecipient")
+}
+
+model AccountSession {
+  tokenHash String   @id
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  // Devices (Settings → Devices): which browser, and when it was last used.
+  deviceHash String?
+  userAgent  String?
+  lastSeenAt DateTime?
+
+  @@index([accountId])
+}
+
+// The group chat: members messaging each other, with Hush posting in it too (memberId = null).
+// kind: TEXT (a person), HUSH (Hush talking), EVENT ("Maya joined"), PLAN (Hush shared the plan).
+model GroupMessage {
+  id        String   @id @default(cuid())
+  circleId  String
+  circle    Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  memberId  String?
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  kind      String   @default("TEXT")
+  body      String
+  // The sender's name, kept on their messages if they leave or are removed from the group.
+  senderName String?
+  // Replying to another message in the same chat (shown as a quote above the reply).
+  replyToId String?
+  replyTo   GroupMessage?  @relation("Replies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   GroupMessage[] @relation("Replies")
+  // Hush's tap-to-answer options on its message: [{ label, action: "reply" | "plan" | "type" }].
+  options   Json?
+  // kind ASK: Hush's follow-up question, answered privately.
+  askId     String?
+  ask       HushAsk?       @relation(fields: [askId], references: [id], onDelete: Cascade)
+  // kind ITEM: Hush's card for something it noticed in the chat (event / to-do / decision).
+  itemId    String?
+  item      ChatItem?      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  reactions GroupReaction[]
+  // kind FILE: an attachment (deleted after 7 days)
+  attachment Attachment?
+  createdAt DateTime @default(now())
+
+  @@index([circleId, createdAt])
+  @@index([replyToId])
+}
+
+// Tapbacks: one emoji per person per message (tapping another replaces it), like iMessage.
+model GroupReaction {
+  messageId String
+  message   GroupMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  emoji     String
+  at        DateTime     @default(now())
+
+  @@id([messageId, memberId])
+}
+
+// Things Hush noticed in the group chat on its own: events being planned, to-dos someone took on,
+// decisions. Built only from the group chat (which every member can see), never from private chats.
+model ChatItem {
+  id        String             @id @default(cuid())
+  circleId  String
+  circle    Circle             @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  kind      String             // EVENT | TASK | DECISION
+  title     String
+  startsAt  DateTime?
+  whenText  String?
+  place     String?
+  owner     String?            // to-dos: who said they'd do it, as written in the chat
+  details   String?
+  status    String             @default("OPEN") // OPEN | DONE | DISMISSED
+  askedAt   DateTime?          // when Hush last asked the group a follow-up about this (no repeats)
+  outcome   String?            // last outcome Hush announced from the private answers: ALL_IN | NOT_ALL
+  // A real place Hush found (restaurants): { name, address, lat, lng, city, state } for booking/map links.
+  placeMeta Json?
+  // Multi-part plans (e.g. concert, then food): [{ label, kind, startsAt, whenText, place, placeMeta, costCents }]
+  parts     Json?
+  costCents Int?               // estimated cost per person for the whole plan
+  shares    ItemShare[]
+  chipIns   ItemChipIn[]
+  asks      HushAsk[]
+  checkIns  HushCheckIn[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  responses ChatItemResponse[]
+  messages  GroupMessage[]
+
+  @@index([circleId, createdAt])
+}
+
+model ChatItemResponse {
+  itemId   String
+  item     ChatItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  memberId String
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  answer   String   // IN | MAYBE | OUT
+  at       DateTime @default(now())
+
+  @@id([itemId, memberId])
+}
+
+// A company using the business version. Accounts with an email at `domain` join it automatically.
+model Organization {
+  id         String    @id @default(cuid())
+  name       String
+  domain     String    @unique
+  // Company-wide policies (management page)
+  toneCheck  Boolean   @default(true)
+  autoDetect Boolean   @default(true)
+  isDemo     Boolean   @default(false)
+  // Manager review (off by default): someone who sends messages as written after Hush flagged them,
+  // 3+ times in 7 days, gets a review by their manager (HR for serious content). They're warned first.
+  managerReview Boolean @default(false)
+  createdAt  DateTime  @default(now())
+  accounts   Account[]
+  circles    Circle[]
+  escalations Escalation[]
+}
+
+// A follow-up question Hush asks the group (e.g. "When works for dinner?"). Everyone answers
+// PRIVATELY; the group only ever sees the result Hush picks, never who chose what.
+model HushAsk {
+  id        String       @id @default(cuid())
+  circleId  String
+  circle    Circle       @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  itemId    String?
+  item      ChatItem?    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  field     String       // when | place | other
+  question  String
+  options   Json         // string[]
+  status    String       @default("OPEN") // OPEN | CLOSED
+  result    String?
+  // Extra data per option (e.g. the exact start time of a suggested slot, or a restaurant's address).
+  meta      Json?
+  createdAt DateTime     @default(now())
+  answers   HushAnswer[]
+  messages  GroupMessage[]
+
+  @@index([circleId])
+}
+
+model HushAnswer {
+  askId    String
+  ask      HushAsk  @relation(fields: [askId], references: [id], onDelete: Cascade)
+  memberId String
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  choice   Int?     // index into options, or null when they wrote their own
+  text     String?  // "something else"
+  // field "location": roughly where this person is coming from (rounded to ~1 km). Private; only
+  // used to find somewhere central, never shown to anyone.
+  lat      Float?
+  lng      Float?
+  at       DateTime @default(now())
+
+  @@id([askId, memberId])
+}
+
+
+// A calendar someone linked so Hush can find times that work. Only free/busy is ever read (event
+// titles are never stored or shown), and the secret link / token is encrypted at rest.
+model CalendarLink {
+  id        String    @id @default(cuid())
+  accountId String
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  provider  String    // ics (Apple / Google / Outlook calendar link) | google (Google sign-in)
+  label     String
+  secretEnc String    // encrypted ICS URL, or encrypted Google refresh token
+  lastOkAt  DateTime?
+  lastError String?
+  createdAt DateTime  @default(now())
+
+  @@index([accountId])
+}
+
+// After a poll doesn't work for everyone, Hush checks in with each person in their private chat,
+// then looks at all the answers (and linked calendars) together and tells the group only the result.
+model HushCheckIn {
+  id        String             @id @default(cuid())
+  circleId  String
+  circle    Circle             @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  itemId    String?
+  item      ChatItem?          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  reason    String             // what started it, e.g. "not everyone can make it"
+  status    String             @default("OPEN") // OPEN | DONE
+  // Planning session stages, all in each person's private Hush chat:
+  // INTAKE (organizer describes it) → ASKING (everyone: can you make it? + details) →
+  // CONFIRMING (everyone sees the proposed plan and confirms once) → DONE (posted to the group).
+  stage     String             @default("ASKING")
+  organizerId String?          // member who pressed "Plan event" (or null when Hush started it)
+  brief     String?            // what the organizer / chat said the plan is
+  proposal  Json?              // the plan Hush proposes: { title, summary, parts[], costCents }
+  revision  Int                @default(0)
+  verdict   String?            // WORKS | PARTIAL | NO_TIME
+  createdAt DateTime           @default(now())
+  doneAt    DateTime?
+  replies   HushCheckInReply[]
+
+  @@index([circleId])
+}
+
+model HushCheckInReply {
+  checkInId String
+  checkIn   HushCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status    String      @default("ASKING") // ASKING | DONE
+  turns     Int         @default(0)
+  attending String?     // IN | MAYBE | OUT (asked once, at the start)
+  confirm   String?     // YES | CHANGE (asked once, at the end)
+  lat       Float?      // where they're coming from, rounded to ~1 km (private)
+  lng       Float?
+  budgetCents Int?      // what's comfortable to spend (private)
+  // Private: what this person said works for them, e.g. { days, times, notes, canMakeOriginal }.
+  summary   Json?
+  at        DateTime    @default(now())
+
+  @@id([checkInId, memberId])
+}
+
+// Someone an admin removed from a group: the invite link no longer lets them back in (an admin can
+// still add them back, which clears this).
+model CircleRemoval {
+  circleId  String
+  circle    Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  at        DateTime @default(now())
+
+  @@id([circleId, accountId])
+}
+
+// A work message sent as written after Hush flagged it ("Send mine anyway"). Recorded only while the
+// company has manager review on. Only what was posted to coworkers is kept; never private Hush chats.
+model ToneOverride {
+  id           String      @id @default(cuid())
+  accountId    String
+  account      Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  orgId        String
+  circleTitle  String
+  text         String      // the message exactly as sent to the group
+  issue        String?     // Hush's reason
+  severity     String      // tone | serious
+  escalationId String?
+  escalation   Escalation? @relation(fields: [escalationId], references: [id], onDelete: SetNull)
+  at           DateTime    @default(now())
+
+  @@index([accountId, at])
+}
+
+// A review for a person's manager (or HR for serious content): the messages they sent anyway, and why
+// Hush flagged them. A person decides what happens; Hush never acts on its own.
+model Escalation {
+  id          String         @id @default(cuid())
+  orgId       String
+  org         Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  subjectId   String
+  subject     Account        @relation("EscalationSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  route       String         // MANAGER | HR
+  recipientId String?        // the manager (route MANAGER); HR reviews are shared by everyone on HR
+  recipient   Account?       @relation("EscalationRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
+  severity    String         // tone | serious
+  status      String         @default("OPEN") // OPEN | REVIEWED | DISMISSED
+  note        String?        // the reviewer's private note
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  overrides   ToneOverride[]
+
+  @@index([orgId, status])
+}
+
+// Money for a plan (chip-in). Each person's share; people with room can quietly chip in to cover
+// someone's shortfall. Only your own numbers are ever shown to you; the group sees nothing.
+model ItemShare {
+  itemId      String
+  item        ChatItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  memberId    String
+  baseCents   Int
+  capCents    Int?       // private: what they said is comfortable (null = no limit)
+  coveredCents Int       @default(0)
+  finalCents  Int
+  paidAt      DateTime?
+  stripeSession String?
+
+  @@id([itemId, memberId])
+}
+
+model ItemChipIn {
+  id           String   @id @default(cuid())
+  itemId       String
+  item         ChatItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  fromMemberId String
+  amountCents  Int
+  status       String   @default("PENDING") // PENDING (checkout open) | PAID
+  stripeSession String?
+  createdAt    DateTime @default(now())
+
+  @@unique([itemId, fromMemberId])
+}
+
+// A browser someone chose to remember: two-step codes are skipped there.
+model TrustedDevice {
+  accountId  String
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  deviceHash String
+  createdAt  DateTime @default(now())
+
+  @@id([accountId, deviceHash])
+}
+
+// "Invite a friend" link for someone who isn't on Silent Consensus yet: when they sign up with it,
+// they're connected to whoever sent it (a DM opens between them).
+model FriendInvite {
+  token       String    @id
+  fromId      String
+  from        Account   @relation(fields: [fromId], references: [id], onDelete: Cascade)
+  usedById    String?
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// A file shared in a chat. Kept 7 days, then deleted. Hush can't read it unless the sender explicitly
+// said yes to "Would you like Hush AI to see this?" (aiVisible), which only the sender can set.
+model Attachment {
+  id        String       @id @default(cuid())
+  circleId  String
+  memberId  String
+  messageId String?      @unique
+  message   GroupMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  name      String
+  mime      String
+  size      Int
+  path      String       // on disk, under UPLOAD_DIR
+  aiVisible Boolean      @default(false)
+  aiAnswered Boolean     @default(false)
+  createdAt DateTime     @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }
