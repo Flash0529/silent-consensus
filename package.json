@@ -12,7 +12,11 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "postinstall": "prisma generate",
-    "test:live": "vitest run --config vitest.live.config.ts"
+    "test:live": "vitest run --config vitest.live.config.ts",
+    "test:e2e:hangout": "node tests/e2e/hangout.mjs",
+    "test:e2e:mediation": "node tests/e2e/mediation.mjs",
+    "test:e2e:remember": "node tests/e2e/remember.mjs",
+    "test:e2e": "npm run test:e2e:remember && npm run test:e2e:hangout && npm run test:e2e:mediation"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -126,6 +126,15 @@ npm test            # unit tests: chip-in math, privacy serializer, leak guard, 
 npm run test:live   # live smoke tests against the configured AI providers
 ```
 
+End-to-end tests (`tests/e2e/`) drive whole stories through a running server and assert privacy and money at every step. They need `npm run dev` running, `DEMO_MODE=true`, and a working AI key. Set `E2E_BASE_URL` to test another host.
+
+```bash
+npm run test:e2e:hangout     # 4 simulated friends → plan → votes → chip-in; Maya pays exactly her $15 cap
+npm run test:e2e:mediation   # 4 roommates → way forward → private follow-up → one replan → agreement
+npm run test:e2e:remember    # opt-in memory on real device cookies; same name on another phone sees nothing
+npm run test:e2e             # all three
+```
+
 ## Running the demo
 
 With `DEMO_MODE=true`:
@@ -166,7 +175,7 @@ lib/serialize.ts     toGroupSafe(), the only group serializer
 data/                demo venues and personas
 prisma/schema.prisma data model
 design/              reference screens from the design canvas
-tests/               Vitest unit tests (tests/live: live AI smoke tests)
+tests/               Vitest unit tests (tests/live: live AI smoke tests, tests/e2e: end-to-end scripts)
 ```
 
 ## Libraries used
